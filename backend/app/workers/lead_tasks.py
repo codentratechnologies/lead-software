@@ -3,7 +3,7 @@ from celery import shared_task
 from app.core.gemini import genai
 from bs4 import BeautifulSoup
 import httpx
-from playwright.sync_api import sync_playwright
+# from playwright.sync_api import sync_playwright
 from ddgs import DDGS
 import time
 
@@ -79,42 +79,9 @@ def search_duckduckgo(niche: str, location: str, max_results_per_source: int = 5
     return results
 
 def search_google_maps(niche: str, location: str, max_results_per_source: int = 5):
-    results = []
-    search_query = f"{niche} in {location}".strip()
-    print(f"Scraping Maps for: {search_query}")
-    
-    try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            url = f"https://www.google.com/maps/search/{search_query.replace(' ', '+')}"
-            page.goto(url, timeout=30000)
-            
-            try:
-                page.wait_for_selector('div[role="feed"]', timeout=5000)
-            except Exception:
-                try:
-                    page.wait_for_selector('h1', timeout=5000)
-                except Exception as e:
-                    print("Could not find Maps results feed.")
-            
-            time.sleep(3)
-            links = page.locator('a[href*="/maps/place/"]').all()
-            
-            added_count = 0
-            for link in links:
-                if added_count >= max_results_per_source:
-                    break
-                href = link.get_attribute("href")
-                name = link.get_attribute("aria-label")
-                if name and href:
-                    results.append({"name": name, "website": href, "description": "Google Maps Listing", "source": "maps"})
-                    added_count += 1
-            browser.close()
-    except Exception as e:
-        print(f"Maps search error: {e}")
-        
-    return results
+    # Google Maps scraping disabled because Playwright is blocked by Application Control policy
+    print("Google Maps search skipped (Playwright disabled)")
+    return []
 
 def generate_ai_leads(niche: str, location: str, count: int = 2):
     prompt = f"""
@@ -204,17 +171,15 @@ def extract_intent_and_search(query: str):
     return best_leads
 
 def scrape_website(url: str) -> str:
-    """Scrapes a website and returns its text content."""
+    """Scrapes a website and returns its text content using httpx."""
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
-            page.goto(url, timeout=15000)
-            content = page.content()
-            browser.close()
-            
-            soup = BeautifulSoup(content, "html.parser")
-            return soup.get_text(separator=" ", strip=True)[:5000] # Limit tokens
+        # Fallback to basic httpx request since Playwright is blocked
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        response = httpx.get(url, timeout=15.0, headers=headers)
+        response.raise_for_status()
+        
+        soup = BeautifulSoup(response.text, "html.parser")
+        return soup.get_text(separator=" ", strip=True)[:5000] # Limit tokens
     except Exception as e:
         print(f"Scraping error for {url}: {e}")
         return ""

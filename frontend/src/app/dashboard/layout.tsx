@@ -10,6 +10,7 @@ import {
   Settings,
   Sparkles
 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function DashboardLayout({
   children,
@@ -33,8 +34,14 @@ export default function DashboardLayout({
       >
         <div className="h-20 flex items-center px-6 border-b border-slate-200/60">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center shadow-sm">
-              <Sparkles size={16} className="text-white" />
+            <div className="relative w-8 h-8 flex items-center justify-center">
+              <Image 
+                src="/codentra logoo.png" 
+                alt="Codentra Logo" 
+                fill
+                sizes="32px"
+                className="object-contain"
+              />
             </div>
             <h1 className="text-xl font-bold text-slate-900">Codentra</h1>
           </div>
