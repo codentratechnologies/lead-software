@@ -36,14 +36,21 @@ export default function DashboardLayout({
           <div className="flex items-center gap-2">
             <div className="relative w-8 h-8 flex items-center justify-center">
               <Image 
-                src="/codentra logoo.png" 
+                src="/codentra logo without text and bg.png" 
                 alt="Codentra Logo" 
                 fill
                 sizes="32px"
                 className="object-contain"
               />
             </div>
-            <h1 className="text-xl font-bold text-slate-900">Codentra</h1>
+            <div className="flex flex-col -gap-1">
+              <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500 tracking-tight leading-none">
+                Codentra
+              </h1>
+              <span className="text-[10px] font-semibold text-cyan-600 uppercase tracking-widest mt-0.5">
+                Lead Software
+              </span>
+            </div>
           </div>
         </div>
 
