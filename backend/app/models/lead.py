@@ -18,6 +18,7 @@ class Lead(Base):
     recommended_solution = Column(Text) # JSON string
     lead_score = Column(Float)
     status = Column(String, default="New") # New, Contacted, Meeting Scheduled, etc.
+    source = Column(String, default="ai") # maps, linkedin, instagram, ai
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

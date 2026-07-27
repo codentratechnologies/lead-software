@@ -14,7 +14,6 @@ def read_leads(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve leads.
@@ -27,7 +26,6 @@ def read_lead(
     *,
     db: Session = Depends(deps.get_db),
     id: int,
-    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get lead by ID.
@@ -36,3 +34,19 @@ def read_lead(
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")
     return lead
+
+@router.delete("/{id}")
+def delete_lead(
+    *,
+    db: Session = Depends(deps.get_db),
+    id: int,
+) -> Any:
+    """
+    Delete a lead by ID.
+    """
+    lead = db.query(LeadModel).filter(LeadModel.id == id).first()
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    db.delete(lead)
+    db.commit()
+    return {"message": "Lead deleted successfully"}

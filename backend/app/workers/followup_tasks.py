@@ -1,6 +1,6 @@
 from celery import shared_task
 from datetime import datetime, date
-import google.generativeai as genai
+from app.core.gemini import genai
 
 from app.core.database import SessionLocal
 from app.models.followup import FollowUp
@@ -44,7 +44,7 @@ def process_daily_followups():
             }}
             """
             
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            model = genai.GenerativeModel('gemini-flash-latest')
             try:
                 response = model.generate_content(prompt)
                 raw_text = response.text.strip()

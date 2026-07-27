@@ -3,7 +3,7 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-import google.generativeai as genai
+from app.core.gemini import genai
 
 from app.api import deps
 from app.models.lead import Lead as LeadModel
@@ -22,7 +22,6 @@ class GenerateEmailRequest(BaseModel):
 def generate_email(
     request: GenerateEmailRequest,
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Generate a personalized email for a specific lead using AI.
@@ -54,7 +53,7 @@ def generate_email(
     }}
     """
     
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
     try:
         response = model.generate_content(prompt)
         raw_text = response.text.strip()
@@ -74,13 +73,12 @@ def generate_email(
         
     except Exception as e:
         print(f"Failed to generate email: {e}")
-        raise HTTPException(status_code=500, detail="Failed to generate email via AI")
+        raise HTTPException(status_code=500, detail=f"Failed to generate email via AI: {str(e)}")
 
 @router.get("/{lead_id}", response_model=List[Email])
 def get_emails_for_lead(
     lead_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get all emails generated for a lead.

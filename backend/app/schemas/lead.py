@@ -31,6 +31,7 @@ class LeadBase(BaseModel):
     recommended_solution: Optional[str] = None
     lead_score: Optional[float] = None
     status: Optional[str] = "New"
+    source: Optional[str] = "ai"
 
 class LeadCreate(LeadBase):
     company_id: int
