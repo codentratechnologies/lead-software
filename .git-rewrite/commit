@@ -1,6 +1,0 @@
-tree 8c89c017cec150f5440870f81766d035c696687b
-parent 5dbdb7714e00662888e070317e07b2d1be8d181a
-author Meet Gajera <meetgajera1655@gmail.com> 1785165480 +0530
-committer Meet Gajera <meetgajera1655@gmail.com> 1785165480 +0530
-
-fix: explicitly type Framer Motion variants for Next.js build
