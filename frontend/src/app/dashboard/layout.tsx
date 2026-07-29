@@ -121,10 +121,7 @@ export default function DashboardLayout({
         </div>
 
         <div className="p-4 border-t border-slate-100 space-y-1">
-          <Link href="/dashboard/settings" className="flex items-center space-x-3 px-4 py-2.5 text-slate-500 rounded-xl hover:text-slate-900 hover:bg-slate-50 transition-colors">
-            <Settings size={20} className="text-slate-400" />
-            <span className="text-sm font-medium">Settings</span>
-          </Link>
+
           <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center space-x-3 px-4 py-2.5 text-slate-500 rounded-xl hover:text-red-600 hover:bg-red-50 transition-colors group">
             <LogOut size={20} className="text-slate-400 group-hover:text-red-500" />
             <span className="text-sm font-medium">Logout</span>
