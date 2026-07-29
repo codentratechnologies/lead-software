@@ -4,6 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Bot, Send, Copy, CheckCircle2, Building2, Briefcase, AlertTriangle, Lightbulb, User, Mail, Phone } from "lucide-react";
+import { ref, get } from "firebase/database";
+import { database } from "@/lib/firebase";
 
 export default function LeadDetailsPage() {
   const params = useParams();
@@ -19,8 +21,13 @@ export default function LeadDetailsPage() {
   useEffect(() => {
     const fetchLead = async () => {
       try {
-        const res = await api.get(`/leads/${leadId}`);
-        setLead(res.data);
+        const leadRef = ref(database, `leads/${leadId}`);
+        const snapshot = await get(leadRef);
+        if (snapshot.exists()) {
+          setLead({ id: snapshot.key, ...snapshot.val() });
+        } else {
+          setLead(null);
+        }
       } catch (error) {
         console.error("Failed to fetch lead details:", error);
       } finally {
@@ -35,15 +42,30 @@ export default function LeadDetailsPage() {
   const handleGenerateEmail = async () => {
     setGenerating(true);
     try {
-      const res = await api.post("/emails/generate", { lead_id: Number(leadId) });
+      const res = await fetch("/api/emails/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyName: lead.company.name,
+          industry: lead.company.industry,
+          contactPerson: lead.contact_person,
+          problems: lead.problems_identified,
+          solution: lead.recommended_solution
+        })
+      });
+      
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || "Failed to generate email");
+      }
+      
       setEmailDraft({
-        subject: res.data.subject,
-        body: res.data.body
+        subject: data.subject,
+        body: data.body
       });
     } catch (error: any) {
       console.error("Failed to generate email:", error);
-      const msg = error.response?.data?.detail || "Failed to generate email. Make sure the backend is running.";
-      alert(msg);
+      alert(error.message || "Failed to generate email. Please try again.");
     } finally {
       setGenerating(false);
     }
