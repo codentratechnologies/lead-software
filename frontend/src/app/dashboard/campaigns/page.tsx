@@ -17,6 +17,7 @@ type Campaign = {
 
 export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [leadsCount, setLeadsCount] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
 
   // Filtering state
@@ -32,7 +33,7 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     const campaignsRef = ref(database, 'campaigns');
-    const unsubscribe = onValue(campaignsRef, (snapshot) => {
+    const unsubscribeCampaigns = onValue(campaignsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const campaignsArray = Object.keys(data).map(key => ({
@@ -52,7 +53,27 @@ export default function CampaignsPage() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    const leadsRef = ref(database, 'leads');
+    const unsubscribeLeads = onValue(leadsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const counts: Record<string, number> = {};
+        Object.values(data).forEach((lead: any) => {
+          const campId = lead.campaign_id;
+          if (campId) {
+            counts[campId] = (counts[campId] || 0) + 1;
+          }
+        });
+        setLeadsCount(counts);
+      } else {
+        setLeadsCount({});
+      }
+    });
+
+    return () => {
+      unsubscribeCampaigns();
+      unsubscribeLeads();
+    };
   }, []);
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
@@ -270,9 +291,15 @@ export default function CampaignsPage() {
                       {getStatusPill(camp.status)}
                     </td>
                     <td className="px-6 py-5 align-top">
-                      <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded bg-slate-50 text-slate-700 font-mono text-sm border border-slate-200 shadow-sm">
-                        {camp.leads_generated}
-                      </span>
+                      <div className="flex flex-col gap-2 items-start">
+                        <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded bg-slate-50 text-slate-700 font-mono text-sm border border-slate-200 shadow-sm" title="Stored count">
+                          {camp.leads_generated || 0}
+                        </span>
+                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] uppercase font-semibold border border-indigo-200 tracking-wider" title="Live count from leads database">
+                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse mr-1.5"></span>
+                          Live: {leadsCount[camp.id] || 0}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-5 align-top text-right">
                       <div className="flex items-center justify-end gap-1.5">
