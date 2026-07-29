@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Sparkles, ArrowRight, Loader2 } from "lucide-react";
+import { ref, push, serverTimestamp } from "firebase/database";
+import { database } from "@/lib/firebase";
 
 export default function SearchPage() {
   const router = useRouter();
@@ -17,10 +18,14 @@ export default function SearchPage() {
 
     setIsGenerating(true);
     try {
-      await api.post("/campaigns", {
+      const campaignsRef = ref(database, 'campaigns');
+      await push(campaignsRef, {
         name: query.slice(0, 30) + (query.length > 30 ? "..." : ""),
         search_query: query,
-        description: "AI Generated Campaign"
+        description: "AI Generated Campaign",
+        status: "Running",
+        leads_count: 0,
+        created_at: serverTimestamp(),
       });
       
       setSuccess(true);

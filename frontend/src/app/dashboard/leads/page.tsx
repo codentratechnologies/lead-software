@@ -1,14 +1,15 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Search as SearchIcon, ExternalLink, Trash2, Eye } from "lucide-react";
-import { api } from "@/lib/api";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { ref, onValue, remove } from "firebase/database";
+import { database } from "@/lib/firebase";
 
 type Lead = {
-  id: number;
-  company_id: number;
-  campaign_id: number;
+  id: string;
+  company_id: string;
+  campaign_id: string;
   contact_person: string;
   email: string;
   phone: string;
@@ -17,7 +18,7 @@ type Lead = {
   lead_score: number;
   status: string;
   source: string;
-  created_at: string;
+  created_at: string | number;
   company: {
     name: string;
     industry: string;
@@ -47,27 +48,35 @@ export default function LeadsPage() {
       setCampaignIdFilter(urlParams.get('campaign_id'));
     }
     
-    const fetchLeads = async () => {
-      try {
-        const res = await api.get("/leads");
-        setLeads(res.data);
-      } catch (error) {
-        console.error("Failed to fetch leads:", error);
-      } finally {
-        setLoading(false);
+    const leadsRef = ref(database, 'leads');
+    const unsubscribe = onValue(leadsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const leadsArray = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        }));
+        // Sort by newest first
+        leadsArray.sort((a, b) => {
+          const aTime = typeof a.created_at === 'number' ? a.created_at : new Date(a.created_at).getTime();
+          const bTime = typeof b.created_at === 'number' ? b.created_at : new Date(b.created_at).getTime();
+          return bTime - aTime;
+        });
+        setLeads(leadsArray);
+      } else {
+        setLeads([]);
       }
-    };
+      setLoading(false);
+    });
 
-    fetchLeads();
-    const interval = setInterval(fetchLeads, 10000);
-    return () => clearInterval(interval);
+    return () => unsubscribe();
   }, []);
 
-  const handleDeleteLead = async (id: number) => {
+  const handleDeleteLead = async (id: string) => {
     if (!confirm("Are you sure you want to delete this lead?")) return;
     try {
-      await api.delete(`/leads/${id}`);
-      setLeads(prev => prev.filter(l => l.id !== id));
+      const leadRef = ref(database, `leads/${id}`);
+      await remove(leadRef);
     } catch (error) {
       console.error("Failed to delete lead:", error);
     }
@@ -75,7 +84,7 @@ export default function LeadsPage() {
 
   const filteredLeads = leads.filter(lead => {
     // Campaign ID Filter
-    if (campaignIdFilter && lead.campaign_id !== Number(campaignIdFilter)) {
+    if (campaignIdFilter && String(lead.campaign_id) !== campaignIdFilter) {
       return false;
     }
 

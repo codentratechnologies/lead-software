@@ -2,17 +2,18 @@
 import { useState, useEffect } from "react";
 import { motion, Variants } from "framer-motion";
 import { Users, Flame, LayoutDashboard, Activity } from "lucide-react";
-import { api } from "@/lib/api";
+import { ref, onValue } from "firebase/database";
+import { database } from "@/lib/firebase";
 
 type Lead = {
-  id: number;
+  id: string | number;
   lead_score: number;
   created_at: string;
   company: { name: string; }
 };
 
 type Campaign = {
-  id: number;
+  id: string | number;
   name: string;
   status: string;
   created_at: string;
@@ -25,24 +26,61 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [leadsRes, campaignsRes] = await Promise.all([
-          api.get("/leads"),
-          api.get("/campaigns")
-        ]);
-        setLeads(leadsRes.data);
-        setCampaigns(campaignsRes.data);
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
+    const leadsRef = ref(database, 'leads');
+    const campaignsRef = ref(database, 'campaigns');
+
+    let leadsLoaded = false;
+    let campaignsLoaded = false;
+
+    const checkLoading = () => {
+      if (leadsLoaded && campaignsLoaded) {
         setLoading(false);
       }
     };
-    
-    fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
+
+    const unsubscribeLeads = onValue(leadsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        // Convert object to array if Firebase stored it as an object
+        const leadsArray = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        }));
+        setLeads(leadsArray);
+      } else {
+        setLeads([]);
+      }
+      leadsLoaded = true;
+      checkLoading();
+    }, (error) => {
+      console.error("Failed to fetch leads", error);
+      leadsLoaded = true;
+      checkLoading();
+    });
+
+    const unsubscribeCampaigns = onValue(campaignsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const campaignsArray = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        }));
+        setCampaigns(campaignsArray);
+      } else {
+        setCampaigns([]);
+      }
+      campaignsLoaded = true;
+      checkLoading();
+    }, (error) => {
+      console.error("Failed to fetch campaigns", error);
+      campaignsLoaded = true;
+      checkLoading();
+    });
+
+    return () => {
+      unsubscribeLeads();
+      unsubscribeCampaigns();
+    };
   }, []);
 
   const containerVariants: Variants = {
@@ -123,19 +161,23 @@ export default function DashboardPage() {
               <motion.div 
                 key={idx}
                 variants={itemVariants}
-                className="bg-white border border-slate-200 p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-default"
+                whileHover={{ y: -5, transition: { duration: 0.2 } }}
+                className="relative group bg-white/70 backdrop-blur-xl border border-slate-200/60 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-indigo-100 transition-all duration-300 overflow-hidden cursor-default"
               >
-                <div className="flex justify-between items-start">
+                {/* Subtle gradient hover effect */}
+                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/0 to-indigo-50/0 group-hover:from-indigo-50/50 group-hover:to-violet-50/50 transition-colors duration-500 z-0" />
+                
+                <div className="relative z-10 flex justify-between items-start">
                   <div>
-                    <h3 className="text-sm font-medium text-slate-500">{stat.label}</h3>
-                    <p className="text-3xl font-bold text-slate-900 mt-2 tracking-tight">{stat.value}</p>
+                    <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</h3>
+                    <p className="text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">{stat.value}</p>
                   </div>
-                  <div className={`p-2.5 rounded-lg ${stat.bg}`}>
-                    <stat.icon size={20} className={stat.color} />
+                  <div className={`p-3 rounded-xl ${stat.bg} shadow-inner bg-opacity-50 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon size={22} className={stat.color} />
                   </div>
                 </div>
-                <div className="mt-4 flex items-center text-sm">
-                  <span className="text-slate-500 font-medium">{stat.change}</span>
+                <div className="relative z-10 mt-5 flex items-center text-sm">
+                  <span className="text-slate-500 font-medium bg-slate-100/50 px-2 py-1 rounded-md">{stat.change}</span>
                 </div>
               </motion.div>
             ))}
@@ -144,25 +186,37 @@ export default function DashboardPage() {
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.15 }}
-            className="bg-white border border-slate-200 rounded-xl shadow-sm p-6"
+            transition={{ duration: 0.15, delay: 0.2 }}
+            className="bg-white/70 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8"
           >
-            <h2 className="text-lg font-semibold text-slate-900 mb-6">Recent Activity</h2>
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-xl font-bold text-slate-900">Recent Activity</h2>
+              <button className="text-sm font-semibold text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors">View All</button>
+            </div>
             {recentActivities.length === 0 ? (
-              <p className="text-slate-500 text-center py-8">No recent activity found. Start a new AI search!</p>
+              <div className="flex flex-col items-center justify-center py-12 text-center bg-slate-50/50 rounded-xl border border-slate-100 border-dashed">
+                <Activity className="w-12 h-12 text-slate-300 mb-3" />
+                <p className="text-slate-500 font-medium">No recent activity found. Start a new AI search!</p>
+              </div>
             ) : (
-              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-slate-200">
+              <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-slate-200 before:via-slate-200 before:to-transparent">
                 {recentActivities.map((item, idx) => (
-                  <div key={idx} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                    <div className={`flex items-center justify-center w-5 h-5 rounded-full border-4 border-white ${item.color} shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10`} />
-                    <div className="w-[calc(100%-2rem)] md:w-[calc(50%-1.5rem)] p-4 rounded-lg bg-white border border-slate-200 shadow-sm">
-                      <div className="flex items-center justify-between space-x-2 mb-1">
-                        <div className="font-semibold text-slate-900">{item.title}</div>
-                        <time className="font-mono text-xs text-slate-500">{timeAgo(item.time)}</time>
+                  <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 + (idx * 0.1) }}
+                    key={idx} 
+                    className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
+                  >
+                    <div className={`flex items-center justify-center w-5 h-5 rounded-full border-4 border-white ${item.color} shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 ring-4 ring-slate-50 group-hover:scale-125 transition-transform duration-300`} />
+                    <div className="w-[calc(100%-2rem)] md:w-[calc(50%-2rem)] p-5 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md hover:border-indigo-100 transition-all duration-300 group-hover:-translate-y-1">
+                      <div className="flex items-center justify-between space-x-2 mb-2">
+                        <div className="font-bold text-slate-900">{item.title}</div>
+                        <time className="font-mono text-xs font-medium text-slate-400 bg-slate-50 px-2 py-1 rounded-md">{timeAgo(item.time)}</time>
                       </div>
-                      <div className="text-slate-600 text-sm">{item.desc}</div>
+                      <div className="text-slate-500 text-sm">{item.desc}</div>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             )}

@@ -1,17 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Play, Pause, ListFilter, Trash2, Eye, Plus, X, MapPin, Briefcase, Camera, Bot } from "lucide-react";
-import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import { ref, onValue, push, remove, update, serverTimestamp } from "firebase/database";
+import { database } from "@/lib/firebase";
 
 type Campaign = {
-  id: number;
+  id: string;
   name: string;
   search_query: string;
   status: string;
   leads_generated: number;
-  created_at: string;
+  created_at: string | number;
 };
 
 export default function CampaignsPage() {
@@ -30,30 +31,44 @@ export default function CampaignsPage() {
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
-    fetchCampaigns();
-    const interval = setInterval(fetchCampaigns, 5000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchCampaigns = async () => {
-    try {
-      const res = await api.get("/campaigns");
-      setCampaigns(res.data);
-    } catch (error) {
-      console.error("Failed to fetch campaigns:", error);
-    } finally {
+    const campaignsRef = ref(database, 'campaigns');
+    const unsubscribe = onValue(campaignsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const campaignsArray = Object.keys(data).map(key => ({
+          id: key,
+          ...data[key]
+        }));
+        // Sort by newest first
+        campaignsArray.sort((a, b) => {
+          const aTime = typeof a.created_at === 'number' ? a.created_at : new Date(a.created_at).getTime();
+          const bTime = typeof b.created_at === 'number' ? b.created_at : new Date(b.created_at).getTime();
+          return bTime - aTime;
+        });
+        setCampaigns(campaignsArray);
+      } else {
+        setCampaigns([]);
+      }
       setLoading(false);
-    }
-  };
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleCreateCampaign = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsCreating(true);
     try {
-      await api.post("/campaigns", newCampaign);
+      const campaignsRef = ref(database, 'campaigns');
+      await push(campaignsRef, {
+        name: newCampaign.name,
+        search_query: newCampaign.search_query,
+        status: "Running",
+        leads_generated: 0,
+        created_at: serverTimestamp()
+      });
       setShowNewModal(false);
       setNewCampaign({ name: "", search_query: "" });
-      setTimeout(fetchCampaigns, 500);
     } catch (error) {
       console.error("Failed to create campaign:", error);
     } finally {
@@ -61,20 +76,22 @@ export default function CampaignsPage() {
     }
   };
 
-  const handleStopCampaign = async (id: number) => {
+  const handleStopCampaign = async (id: string) => {
     try {
-      await api.post(`/campaigns/${id}/stop`);
-      setCampaigns(prev => prev.map(c => c.id === id ? { ...c, status: "Stopped" } : c));
+      const campaignRef = ref(database, `campaigns/${id}`);
+      await update(campaignRef, { status: "Stopped" });
     } catch (error) {
       console.error("Failed to stop campaign:", error);
     }
   };
 
-  const handleDeleteCampaign = async (id: number) => {
+  const handleDeleteCampaign = async (id: string) => {
     if (!confirm("Are you sure you want to delete this campaign? All associated leads will also be deleted.")) return;
     try {
-      await api.delete(`/campaigns/${id}`);
-      setCampaigns(prev => prev.filter(c => c.id !== id));
+      const campaignRef = ref(database, `campaigns/${id}`);
+      await remove(campaignRef);
+      // NOTE: Associated leads should ideally be deleted via cloud functions, 
+      // but for client-side we'll just remove the campaign node.
     } catch (error) {
       console.error("Failed to delete campaign:", error);
     }
