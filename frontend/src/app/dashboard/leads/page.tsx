@@ -132,8 +132,8 @@ export default function LeadsPage() {
           </div>
         </div>
         
-        <div className="w-full rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
-          <table className="w-full text-left border-collapse">
+        <div className="w-full rounded-lg border border-slate-200 overflow-x-auto bg-white shadow-sm">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200/60 text-xs uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-4 font-semibold">Company</th>

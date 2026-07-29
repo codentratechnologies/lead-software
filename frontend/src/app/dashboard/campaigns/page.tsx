@@ -247,8 +247,8 @@ export default function CampaignsPage() {
         transition={{ duration: 0.15 }}
         className="bg-white rounded-xl shadow-sm border border-slate-200 p-6"
       >
-        <div className="w-full rounded-lg border border-slate-200 overflow-hidden bg-white shadow-sm">
-          <table className="w-full text-left border-collapse">
+        <div className="w-full rounded-lg border border-slate-200 overflow-x-auto bg-white shadow-sm">
+          <table className="w-full text-left border-collapse min-w-[1000px]">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500">
                 <th className="px-6 py-4 font-semibold">Campaign Name</th>
@@ -291,15 +291,9 @@ export default function CampaignsPage() {
                       {getStatusPill(camp.status)}
                     </td>
                     <td className="px-6 py-5 align-top">
-                      <div className="flex flex-col gap-2 items-start">
-                        <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded bg-slate-50 text-slate-700 font-mono text-sm border border-slate-200 shadow-sm" title="Stored count">
-                          {camp.leads_generated || 0}
-                        </span>
-                        <span className="inline-flex items-center justify-center px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] uppercase font-semibold border border-indigo-200 tracking-wider" title="Live count from leads database">
-                          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse mr-1.5"></span>
-                          Live: {leadsCount[camp.id] || 0}
-                        </span>
-                      </div>
+                      <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded bg-slate-50 text-slate-700 font-mono text-sm border border-slate-200 shadow-sm" title="Live Leads Count">
+                        {leadsCount[camp.id] || 0}
+                      </span>
                     </td>
                     <td className="px-6 py-5 align-top text-right">
                       <div className="flex items-center justify-end gap-1.5">
