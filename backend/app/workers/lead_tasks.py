@@ -145,6 +145,100 @@ def filter_best_leads(query: str, pool: list, count: int):
             item["location"] = "Unknown"
         return pool[:count]
 
+def search_apollo(niche: str, location: str, max_results_per_source: int = 5):
+    if not settings.APOLLO_API_KEY:
+        print("Apollo search skipped (API key not configured)")
+        return []
+    # Stub for Apollo.io API integration
+    # Typically would query Apollo's /v1/mixed_people/search with q_organization_domains or similar
+    print(f"Searching Apollo for {niche} in {location}...")
+    return []
+
+def search_crunchbase(niche: str, location: str, max_results_per_source: int = 5):
+    if not settings.CRUNCHBASE_API_KEY:
+        print("Crunchbase search skipped (API key not configured)")
+        return []
+    # Stub for Crunchbase API integration
+    print(f"Searching Crunchbase for {niche} in {location}...")
+    return []
+
+def search_reddit(niche: str, location: str, max_results_per_source: int = 5):
+    if not settings.REDDIT_CLIENT_ID or not settings.REDDIT_CLIENT_SECRET:
+        print("Reddit search skipped (API keys not configured)")
+        return []
+    results = []
+    try:
+        import praw
+        reddit = praw.Reddit(
+            client_id=settings.REDDIT_CLIENT_ID,
+            client_secret=settings.REDDIT_CLIENT_SECRET,
+            user_agent="Codentra Lead Generator v1.0"
+        )
+        search_query = f"{niche} {location}".strip()
+        # Search across all subreddits
+        for submission in reddit.subreddit("all").search(search_query, limit=max_results_per_source):
+            results.append({
+                "name": f"Reddit Post: {submission.title[:30]}", 
+                "website": submission.url, 
+                "description": submission.selftext[:200], 
+                "source": "reddit"
+            })
+    except Exception as e:
+        print(f"Reddit search error: {e}")
+    return results
+
+def search_yelp(niche: str, location: str, max_results_per_source: int = 5):
+    if not settings.YELP_API_KEY:
+        print("Yelp search skipped (API key not configured)")
+        return []
+    results = []
+    try:
+        headers = {"Authorization": f"Bearer {settings.YELP_API_KEY}"}
+        params = {"term": niche, "location": location or "US", "limit": max_results_per_source}
+        response = httpx.get("https://api.yelp.com/v3/businesses/search", headers=headers, params=params, timeout=10.0)
+        if response.status_code == 200:
+            for b in response.json().get("businesses", []):
+                results.append({
+                    "name": b.get("name"),
+                    "website": b.get("url"),
+                    "description": f"Rating: {b.get('rating')}, Reviews: {b.get('review_count')}",
+                    "source": "yelp"
+                })
+    except Exception as e:
+        print(f"Yelp search error: {e}")
+    return results
+
+def search_github(niche: str, location: str, max_results_per_source: int = 5):
+    results = []
+    try:
+        headers = {"Accept": "application/vnd.github.v3+json"}
+        if settings.GITHUB_TOKEN:
+            headers["Authorization"] = f"token {settings.GITHUB_TOKEN}"
+            
+        search_query = f"{niche} location:{location}" if location else niche
+        params = {"q": search_query, "per_page": max_results_per_source}
+        response = httpx.get("https://api.github.com/search/users", headers=headers, params=params, timeout=10.0)
+        
+        if response.status_code == 200:
+            for u in response.json().get("items", []):
+                results.append({
+                    "name": u.get("login"),
+                    "website": u.get("html_url"),
+                    "description": f"GitHub user matching {niche}",
+                    "source": "github"
+                })
+    except Exception as e:
+        print(f"GitHub search error: {e}")
+    return results
+
+def search_apify(niche: str, location: str, max_results_per_source: int = 5):
+    if not settings.APIFY_API_TOKEN:
+        print("Apify search skipped (API key not configured)")
+        return []
+    # Stub for Apify integration (Twitter/Facebook)
+    print(f"Searching Apify for {niche} in {location}...")
+    return []
+
 def extract_intent_and_search(query: str):
     """Uses real multi-source search and Gemini for intent parsing & filtering."""
     parsed = parse_user_query(query)
@@ -160,8 +254,22 @@ def extract_intent_and_search(query: str):
     maps_pool = search_google_maps(niche, location, max_per_source + 2)
     ai_pool = generate_ai_leads(niche, location, 3)
     
+    # New sources
+    apollo_pool = search_apollo(niche, location, max_per_source)
+    crunchbase_pool = search_crunchbase(niche, location, max_per_source)
+    reddit_pool = search_reddit(niche, location, max_per_source)
+    yelp_pool = search_yelp(niche, location, max_per_source)
+    github_pool = search_github(niche, location, max_per_source)
+    apify_pool = search_apify(niche, location, max_per_source)
+    
     pool.extend(maps_pool)
     pool.extend(ai_pool)
+    pool.extend(apollo_pool)
+    pool.extend(crunchbase_pool)
+    pool.extend(reddit_pool)
+    pool.extend(yelp_pool)
+    pool.extend(github_pool)
+    pool.extend(apify_pool)
     
     print(f"Found {len(pool)} potential candidates from all sources.")
     

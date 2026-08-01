@@ -19,6 +19,15 @@ class Settings(BaseSettings):
     # AI Providers
     GEMINI_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
+    
+    # Lead Generation Sources API Keys
+    APOLLO_API_KEY: Optional[str] = None
+    CRUNCHBASE_API_KEY: Optional[str] = None
+    REDDIT_CLIENT_ID: Optional[str] = None
+    REDDIT_CLIENT_SECRET: Optional[str] = None
+    YELP_API_KEY: Optional[str] = None
+    GITHUB_TOKEN: Optional[str] = None
+    APIFY_API_TOKEN: Optional[str] = None
 
     class Config:
         case_sensitive = True
