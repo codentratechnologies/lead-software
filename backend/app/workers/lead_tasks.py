@@ -78,10 +78,57 @@ def search_duckduckgo(niche: str, location: str, max_results_per_source: int = 5
         
     return results
 
-def search_google_maps(niche: str, location: str, max_results_per_source: int = 5):
-    # Google Maps scraping disabled because Playwright is blocked by Application Control policy
-    print("Google Maps search skipped (Playwright disabled)")
-    return []
+
+def search_openstreetmap(niche: str, location: str, max_results_per_source: int = 5):
+    if not location:
+        return []
+        
+    results = []
+    # Take the first main word of the niche for better OSM matching (e.g. 'software companies' -> 'software')
+    niche_keyword = niche.split()[0] if niche else "office"
+    
+    overpass_url = "https://overpass-api.de/api/interpreter"
+    overpass_query = f"""
+    [out:json][timeout:25];
+    area[name~"(?i)^{location}"]->.searchArea;
+    (
+      node["name"~"(?i){niche_keyword}"](area.searchArea);
+      way["name"~"(?i){niche_keyword}"](area.searchArea);
+      node["office"~"(?i){niche_keyword}"](area.searchArea);
+      node["amenity"~"(?i){niche_keyword}"](area.searchArea);
+    );
+    out tags {max_results_per_source};
+    """
+    
+    try:
+        print(f"Searching OpenStreetMap for {niche} in {location}...")
+        response = httpx.post(overpass_url, data={"data": overpass_query}, timeout=30.0)
+        
+        if response.status_code == 200:
+            data = response.json()
+            for element in data.get("elements", []):
+                tags = element.get("tags", {})
+                name = tags.get("name")
+                if not name: continue
+                    
+                website = tags.get("website", "")
+                phone = tags.get("phone", "")
+                
+                desc = f"Category: {tags.get('amenity', tags.get('office', 'Business'))}"
+                if phone: desc += f" | Phone: {phone}"
+                
+                results.append({
+                    "name": name,
+                    "website": website,
+                    "description": desc,
+                    "source": "openstreetmap"
+                })
+        else:
+            print(f"OSM Error: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"OSM search error: {e}")
+        
+    return results
 
 def generate_ai_leads(niche: str, location: str, count: int = 2):
     prompt = f"""
@@ -149,64 +196,44 @@ def search_apollo(niche: str, location: str, max_results_per_source: int = 5):
     if not settings.APOLLO_API_KEY:
         print("Apollo search skipped (API key not configured)")
         return []
-    # Stub for Apollo.io API integration
-    # Typically would query Apollo's /v1/mixed_people/search with q_organization_domains or similar
-    print(f"Searching Apollo for {niche} in {location}...")
-    return []
-
-def search_crunchbase(niche: str, location: str, max_results_per_source: int = 5):
-    if not settings.CRUNCHBASE_API_KEY:
-        print("Crunchbase search skipped (API key not configured)")
-        return []
-    # Stub for Crunchbase API integration
-    print(f"Searching Crunchbase for {niche} in {location}...")
-    return []
-
-def search_reddit(niche: str, location: str, max_results_per_source: int = 5):
-    if not settings.REDDIT_CLIENT_ID or not settings.REDDIT_CLIENT_SECRET:
-        print("Reddit search skipped (API keys not configured)")
-        return []
+    
     results = []
     try:
-        import praw
-        reddit = praw.Reddit(
-            client_id=settings.REDDIT_CLIENT_ID,
-            client_secret=settings.REDDIT_CLIENT_SECRET,
-            user_agent="Codentra Lead Generator v1.0"
-        )
-        search_query = f"{niche} {location}".strip()
-        # Search across all subreddits
-        for submission in reddit.subreddit("all").search(search_query, limit=max_results_per_source):
-            results.append({
-                "name": f"Reddit Post: {submission.title[:30]}", 
-                "website": submission.url, 
-                "description": submission.selftext[:200], 
-                "source": "reddit"
-            })
-    except Exception as e:
-        print(f"Reddit search error: {e}")
-    return results
-
-def search_yelp(niche: str, location: str, max_results_per_source: int = 5):
-    if not settings.YELP_API_KEY:
-        print("Yelp search skipped (API key not configured)")
-        return []
-    results = []
-    try:
-        headers = {"Authorization": f"Bearer {settings.YELP_API_KEY}"}
-        params = {"term": niche, "location": location or "US", "limit": max_results_per_source}
-        response = httpx.get("https://api.yelp.com/v3/businesses/search", headers=headers, params=params, timeout=10.0)
+        url = "https://api.apollo.io/v1/organizations/search"
+        headers = {
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache"
+        }
+        data = {
+            "api_key": settings.APOLLO_API_KEY,
+            "per_page": max_results_per_source
+        }
+        
+        # Determine how to query based on provided niche/location
+        if niche:
+            data["q_organization_keyword_tags"] = [niche]
+        if location:
+            data["organization_locations"] = [location]
+            
+        print(f"Searching Apollo for {niche} in {location}...")
+        response = httpx.post(url, headers=headers, json=data, timeout=15.0)
+        
         if response.status_code == 200:
-            for b in response.json().get("businesses", []):
+            orgs = response.json().get("organizations", [])
+            for org in orgs:
                 results.append({
-                    "name": b.get("name"),
-                    "website": b.get("url"),
-                    "description": f"Rating: {b.get('rating')}, Reviews: {b.get('review_count')}",
-                    "source": "yelp"
+                    "name": org.get("name"),
+                    "website": org.get("website_url"),
+                    "description": org.get("short_description") or org.get("seo_description") or f"Apollo matching {niche}",
+                    "source": "apollo"
                 })
+        else:
+            print(f"Apollo API error: {response.status_code} - {response.text}")
     except Exception as e:
-        print(f"Yelp search error: {e}")
+        print(f"Apollo search error: {e}")
+    
     return results
+
 
 def search_github(niche: str, location: str, max_results_per_source: int = 5):
     results = []
@@ -235,9 +262,42 @@ def search_apify(niche: str, location: str, max_results_per_source: int = 5):
     if not settings.APIFY_API_TOKEN:
         print("Apify search skipped (API key not configured)")
         return []
-    # Stub for Apify integration (Twitter/Facebook)
-    print(f"Searching Apify for {niche} in {location}...")
-    return []
+    
+    results = []
+    try:
+        # Using Apify's Google Search Scraper to find Facebook/Twitter profiles
+        actor_id = "apify/google-search-scraper"
+        url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items"
+        params = {"token": settings.APIFY_API_TOKEN}
+        
+        search_query = f"{niche} {location}".strip()
+        data = {
+            "queries": f"site:twitter.com OR site:facebook.com {search_query}",
+            "resultsPerPage": max_results_per_source
+        }
+        
+        print(f"Searching Apify for {search_query} on social media...")
+        # Apify synchronous runs can take a bit longer as it spins up a container
+        response = httpx.post(url, params=params, json=data, timeout=45.0)
+        
+        if response.status_code in (200, 201):
+            items = response.json()
+            for item in items:
+                # The google-search-scraper returns a list of results in 'organicResults'
+                if "organicResults" in item:
+                    for org in item["organicResults"][:max_results_per_source]:
+                        results.append({
+                            "name": org.get("title", "Unknown Social Profile"),
+                            "website": org.get("url", ""),
+                            "description": org.get("description", f"Social profile for {niche}"),
+                            "source": "apify-social"
+                        })
+        else:
+            print(f"Apify API error: {response.status_code} - {response.text}")
+    except Exception as e:
+        print(f"Apify search error: {e}")
+        
+    return results
 
 def extract_intent_and_search(query: str):
     """Uses real multi-source search and Gemini for intent parsing & filtering."""
@@ -251,23 +311,17 @@ def extract_intent_and_search(query: str):
     max_per_source = max(5, int(count / 2) + 1)
     
     pool = search_duckduckgo(niche, location, max_per_source)
-    maps_pool = search_google_maps(niche, location, max_per_source + 2)
+    osm_pool = search_openstreetmap(niche, location, max_per_source + 2)
     ai_pool = generate_ai_leads(niche, location, 3)
     
     # New sources
     apollo_pool = search_apollo(niche, location, max_per_source)
-    crunchbase_pool = search_crunchbase(niche, location, max_per_source)
-    reddit_pool = search_reddit(niche, location, max_per_source)
-    yelp_pool = search_yelp(niche, location, max_per_source)
     github_pool = search_github(niche, location, max_per_source)
     apify_pool = search_apify(niche, location, max_per_source)
     
-    pool.extend(maps_pool)
+    pool.extend(osm_pool)
     pool.extend(ai_pool)
     pool.extend(apollo_pool)
-    pool.extend(crunchbase_pool)
-    pool.extend(reddit_pool)
-    pool.extend(yelp_pool)
     pool.extend(github_pool)
     pool.extend(apify_pool)
     

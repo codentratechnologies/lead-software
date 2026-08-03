@@ -22,10 +22,6 @@ class Settings(BaseSettings):
     
     # Lead Generation Sources API Keys
     APOLLO_API_KEY: Optional[str] = None
-    CRUNCHBASE_API_KEY: Optional[str] = None
-    REDDIT_CLIENT_ID: Optional[str] = None
-    REDDIT_CLIENT_SECRET: Optional[str] = None
-    YELP_API_KEY: Optional[str] = None
     GITHUB_TOKEN: Optional[str] = None
     APIFY_API_TOKEN: Optional[str] = None
 
