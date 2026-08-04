@@ -333,15 +333,47 @@ def extract_intent_and_search(query: str):
     return best_leads
 
 def scrape_website(url: str) -> str:
-    """Scrapes a website and returns its text content using httpx."""
+    """Scrapes a website and returns its text content using httpx. Enhances with /contact or /about if needed."""
     try:
-        # Fallback to basic httpx request since Playwright is blocked
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
-        response = httpx.get(url, timeout=15.0, headers=headers)
+        response = httpx.get(url, timeout=15.0, headers=headers, follow_redirects=True)
         response.raise_for_status()
         
         soup = BeautifulSoup(response.text, "html.parser")
-        return soup.get_text(separator=" ", strip=True)[:5000] # Limit tokens
+        main_text = soup.get_text(separator=" ", strip=True)
+        
+        # Tech stack detection via common generators/scripts
+        tech_stack = []
+        if soup.find("meta", {"name": "generator"}):
+            gen = soup.find("meta", {"name": "generator"}).get("content", "")
+            if gen: tech_stack.append(gen)
+        if "wp-content" in response.text: tech_stack.append("WordPress")
+        if "cdn.shopify.com" in response.text: tech_stack.append("Shopify")
+        if "_next/static" in response.text: tech_stack.append("Next.js")
+        if "react" in response.text.lower(): tech_stack.append("React")
+        
+        # If no clear contact info, scrape /contact or /about
+        contact_keywords = ["@", "phone", "contact", "email"]
+        has_contact = any(k in main_text.lower() for k in contact_keywords)
+        
+        extra_text = ""
+        if not has_contact:
+            base_url = str(response.url).rstrip("/")
+            for path in ["/contact", "/about", "/contact-us"]:
+                try:
+                    c_resp = httpx.get(base_url + path, timeout=5.0, headers=headers, follow_redirects=True)
+                    if c_resp.status_code == 200:
+                        c_soup = BeautifulSoup(c_resp.text, "html.parser")
+                        extra_text += " " + c_soup.get_text(separator=" ", strip=True)[:1000]
+                        break # Only need one successful contact page
+                except:
+                    continue
+                    
+        combined_text = (main_text[:4000] + extra_text)[:5000]
+        if tech_stack:
+            combined_text += f" [DETECTED TECH STACK: {', '.join(set(tech_stack))}]"
+            
+        return combined_text
     except Exception as e:
         print(f"Scraping error for {url}: {e}")
         return ""
@@ -352,13 +384,14 @@ def analyze_and_score_lead(company_name: str, website_text: str):
     Analyze this website content for {company_name}:
     
     CONTENT:
-    {website_text[:4000]}
+    {website_text[:5000]}
     
     Identify:
     1. Potential problems or missing features (e.g. outdated, no booking system, no CRM).
     2. Recommended software solutions we can sell them.
     3. A lead score from 0 to 100 indicating how likely they need our IT services.
     4. Extract any contact person name, email address, or phone number found in the text.
+    5. Extract the Technology Stack (if explicitly mentioned in the text as DETECTED TECH STACK or derived).
     
     Return ONLY valid JSON:
     {{
@@ -367,7 +400,8 @@ def analyze_and_score_lead(company_name: str, website_text: str):
         "lead_score": 85,
         "contact_person": "John Doe",
         "email": "contact@example.com",
-        "phone": "+1-555-0192"
+        "phone": "+1-555-0192",
+        "tech_stack": ["WordPress", "React"]
     }}
     """
     model = genai.GenerativeModel('gemini-flash-latest')
@@ -384,7 +418,8 @@ def analyze_and_score_lead(company_name: str, website_text: str):
             "lead_score": 50,
             "contact_person": "",
             "email": "",
-            "phone": ""
+            "phone": "",
+            "tech_stack": []
         }
 
 @shared_task

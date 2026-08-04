@@ -1,5 +1,6 @@
 import os
 import time
+import httpx
 import firebase_admin
 from firebase_admin import credentials, db
 
@@ -18,6 +19,15 @@ def init_firebase():
         'databaseURL': 'https://codentra-lead-generate-default-rtdb.asia-southeast1.firebasedatabase.app'
     })
     print("[Success] Successfully connected to Firebase Realtime Database.")
+
+def trigger_webhook(lead_data: dict, name: str, lead_score: int):
+    webhook_url = os.environ.get("WEBHOOK_URL", "")
+    if webhook_url and lead_score > 80:
+        try:
+            httpx.post(webhook_url, json={"lead": lead_data, "event": "high_score_lead"}, timeout=5.0)
+            print(f"   [Webhook] Triggered webhook for {name}")
+        except Exception as we:
+            print(f"   [Webhook] Failed to trigger webhook: {we}")
 
 def process_campaign(campaign_id, campaign_data):
     print(f"\n[Processing] Processing campaign: {campaign_data.get('name')}")
@@ -69,6 +79,7 @@ def process_campaign(campaign_id, campaign_data):
             "problems_identified": problems_str,
             "recommended_solution": solutions_str,
             "lead_score": analysis.get("lead_score", 0),
+            "tech_stack": analysis.get("tech_stack", []),
             "source": comp_data.get("source", "ai"),
             "status": "New",
             "created_at": {".sv": "timestamp"} # Server timestamp
@@ -78,35 +89,61 @@ def process_campaign(campaign_id, campaign_data):
         leads_generated += 1
         print(f"   Generated lead: {name} (Score: {analysis.get('lead_score', 0)})")
         
-    # Mark campaign as completed
-    campaigns_ref.update({
-        "status": "Completed",
-        "leads_count": leads_generated
-    })
+        # Webhook Integration
+        trigger_webhook(lead_data, name, analysis.get("lead_score", 0))
+        
+    # Mark campaign as completed or update for schedule
+    is_recurring = campaign_data.get("is_recurring", False)
+    if is_recurring:
+        schedule = campaign_data.get("schedule_frequency", "daily") # daily, weekly
+        next_run_ts = time.time() * 1000 + (86400000 if schedule == "daily" else 604800000)
+        campaigns_ref.update({
+            "status": "Scheduled",
+            "next_run": next_run_ts,
+            "leads_count": campaign_data.get("leads_count", 0) + leads_generated
+        })
+    else:
+        campaigns_ref.update({
+            "status": "Completed",
+            "leads_count": leads_generated
+        })
     print(f"[Success] Campaign completed with {leads_generated} leads.\n")
 
 def poll_for_campaigns():
-    print("[Status] Listening for new campaigns...")
+    print("[Status] Listening for new and scheduled campaigns...")
     while True:
         try:
-            # Query all campaigns and filter in python to avoid Firebase indexing rule errors
             ref = db.reference('campaigns')
             campaigns = ref.get()
             
             if campaigns:
+                current_time = time.time() * 1000
                 for campaign_id, campaign_data in campaigns.items():
-                    if campaign_data.get('status') == 'Running':
+                    status = campaign_data.get('status')
+                    
+                    if status == 'Running':
                         try:
                             process_campaign(campaign_id, campaign_data)
                         except Exception as e:
                             print(f"[Error] Error processing campaign {campaign_id}: {e}")
                             db.reference(f'campaigns/{campaign_id}').update({"status": "Failed"})
+                    
+                    elif status == 'Scheduled':
+                        next_run = campaign_data.get('next_run', 0)
+                        if current_time >= next_run:
+                            try:
+                                print(f"[Schedule] Triggering scheduled campaign: {campaign_id}")
+                                db.reference(f'campaigns/{campaign_id}').update({"status": "Running"})
+                                # It will be picked up on the next tick
+                            except Exception as e:
+                                print(f"[Error] Failed to trigger schedule: {e}")
             
         except Exception as e:
             print(f"[Warning] Polling error: {e}")
             
-        time.sleep(5) # Poll every 5 seconds
+        time.sleep(5)
 
 if __name__ == "__main__":
     init_firebase()
     poll_for_campaigns()
+

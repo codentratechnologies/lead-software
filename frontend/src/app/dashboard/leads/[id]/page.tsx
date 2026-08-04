@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, Bot, Send, Copy, CheckCircle2, Building2, Briefcase, AlertTriangle, Lightbulb, User, Mail, Phone } from "lucide-react";
-import { ref, get } from "firebase/database";
+import { ref, get, onValue, push } from "firebase/database";
 import { database } from "@/lib/firebase";
 
 export default function LeadDetailsPage() {
@@ -17,6 +17,8 @@ export default function LeadDetailsPage() {
   const [generating, setGenerating] = useState(false);
   const [emailDraft, setEmailDraft] = useState<{subject: string, body: string} | null>(null);
   const [copied, setCopied] = useState(false);
+  const [interactions, setInteractions] = useState<any[]>([]);
+  const [newNote, setNewNote] = useState("");
 
   useEffect(() => {
     const fetchLead = async () => {
@@ -36,8 +38,36 @@ export default function LeadDetailsPage() {
     };
     if (leadId) {
       fetchLead();
+      
+      const interactionsRef = ref(database, `leads/${leadId}/interactions`);
+      const unsubscribeInteractions = onValue(interactionsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const arr = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+          arr.sort((a, b) => b.timestamp - a.timestamp);
+          setInteractions(arr);
+        } else {
+          setInteractions([]);
+        }
+      });
+      return () => unsubscribeInteractions();
     }
   }, [leadId]);
+
+  const handleAddNote = async (type: string = "note") => {
+    if (!newNote.trim()) return;
+    try {
+      const interactionsRef = ref(database, `leads/${leadId}/interactions`);
+      await push(interactionsRef, {
+        type,
+        content: newNote,
+        timestamp: Date.now()
+      });
+      setNewNote("");
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   const handleGenerateEmail = async () => {
     setGenerating(true);
@@ -158,6 +188,19 @@ export default function LeadDetailsPage() {
                   {lead.company.industry || "Unknown"}
                 </span>
               </div>
+              
+              {lead.tech_stack && lead.tech_stack.length > 0 && (
+                <div>
+                  <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Tech Stack</span>
+                  <div className="flex flex-wrap gap-2">
+                    {lead.tech_stack.map((tech: string, i: number) => (
+                      <span key={i} className="bg-indigo-50 text-indigo-700 px-2 py-1 rounded text-xs font-medium border border-indigo-200">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div>
                 <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1.5">Contact Info</span>
@@ -263,6 +306,63 @@ export default function LeadDetailsPage() {
                 Click the <strong>Draft AI Email</strong> button on the left to instantly generate a highly personalized outreach message using AI.
               </p>
             </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Bottom Row: Interactions & Notes */}
+      <div className="mt-8 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h3 className="font-semibold text-slate-900 mb-6 flex items-center gap-2 border-b border-slate-100 pb-3">
+          Activity & Notes
+        </h3>
+        
+        <div className="flex gap-4 mb-8">
+          <input 
+            type="text" 
+            placeholder="Add a note or log a call..." 
+            value={newNote}
+            onChange={(e) => setNewNote(e.target.value)}
+            className="flex-1 px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm text-slate-900 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none"
+            onKeyDown={(e) => { if (e.key === 'Enter') handleAddNote("note"); }}
+          />
+          <button 
+            onClick={() => handleAddNote("note")}
+            className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-medium rounded-lg transition-colors"
+          >
+            Add Note
+          </button>
+          <button 
+            onClick={() => handleAddNote("call")}
+            className="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-sm font-medium rounded-lg transition-colors flex items-center gap-1.5"
+          >
+            <Phone size={14} /> Log Call
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          {interactions.length === 0 ? (
+            <div className="text-center text-slate-400 text-sm py-4 italic">No interactions logged yet.</div>
+          ) : (
+            interactions.map(interaction => (
+              <div key={interaction.id} className="flex gap-4 p-4 rounded-lg bg-slate-50 border border-slate-100">
+                <div className="mt-0.5 shrink-0">
+                  {interaction.type === 'call' ? (
+                    <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600"><Phone size={14} /></div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600"><User size={14} /></div>
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-slate-800 text-sm capitalize">{interaction.type}</span>
+                    <span className="text-xs text-slate-400">{new Date(interaction.timestamp).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-slate-600">
+                    {interaction.content}
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>

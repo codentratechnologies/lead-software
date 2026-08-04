@@ -4,11 +4,13 @@ import { motion, Variants } from "framer-motion";
 import { Users, Flame, LayoutDashboard, Activity } from "lucide-react";
 import { ref, onValue } from "firebase/database";
 import { database } from "@/lib/firebase";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 type Lead = {
   id: string | number;
   lead_score: number;
   created_at: string;
+  source?: string;
   company: { name: string; }
 };
 
@@ -134,6 +136,33 @@ export default function DashboardPage() {
     return `${Math.floor(seconds/86400)}d ago`;
   };
 
+  // Chart Data Processing
+  const sourceData = [
+    { name: 'Gemini AI', value: leads.filter(l => l.source === 'ai' || !l.source).length, color: '#6366f1' },
+    { name: 'LinkedIn', value: leads.filter(l => l.source === 'linkedin').length, color: '#3b82f6' },
+    { name: 'Google Maps', value: leads.filter(l => l.source === 'maps').length, color: '#ef4444' },
+    { name: 'Instagram', value: leads.filter(l => l.source === 'instagram').length, color: '#ec4899' },
+    { name: 'Apollo', value: leads.filter(l => l.source === 'apollo').length, color: '#f59e0b' },
+    { name: 'GitHub', value: leads.filter(l => l.source === 'github').length, color: '#10b981' },
+  ].filter(d => d.value > 0);
+
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return {
+      date: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      fullDate: d.toDateString()
+    };
+  });
+  
+  const timeData = last7Days.map(day => {
+    const count = leads.filter(l => {
+        const d = typeof l.created_at === 'number' ? new Date(l.created_at) : new Date(l.created_at);
+        return d.toDateString() === day.fullDate;
+    }).length;
+    return { name: day.date, leads: count };
+  });
+
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <motion.div 
@@ -181,6 +210,65 @@ export default function DashboardPage() {
                 </div>
               </motion.div>
             ))}
+          </motion.div>
+          
+          {/* Charts Row */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, delay: 0.15 }}
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10"
+          >
+            {/* Line Chart */}
+            <div className="lg:col-span-2 bg-white/70 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-6">Leads Generated Over Time (Last 7 Days)</h3>
+              <div className="h-72">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={timeData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
+                    <RechartsTooltip 
+                      contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
+                    />
+                    <Line type="monotone" dataKey="leads" stroke="#4f46e5" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6, stroke: '#4f46e5', strokeWidth: 2, fill: 'white' }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+            
+            {/* Pie Chart */}
+            <div className="lg:col-span-1 bg-white/70 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
+              <h3 className="text-lg font-bold text-slate-900 mb-2">Leads by Source</h3>
+              <div className="h-72">
+                {sourceData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={sourceData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={80}
+                        paddingAngle={5}
+                        dataKey="value"
+                      >
+                        {sourceData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <RechartsTooltip 
+                        contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                      />
+                      <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-slate-400 text-sm">No data available</div>
+                )}
+              </div>
+            </div>
           </motion.div>
           
           <motion.div 
