@@ -8,6 +8,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 
 type Lead = {
   id: string | number;
+  campaign_id?: string | number;
   lead_score: number;
   created_at: string;
   source?: string;
@@ -112,12 +113,15 @@ export default function DashboardPage() {
 
   // Combine and sort recent activity
   const recentActivities = [
-    ...campaigns.map(c => ({
-      time: new Date(c.created_at),
-      title: `Campaign '${c.name}'`,
-      desc: c.status === "Running" ? "Started and actively searching." : `Finished. Generated ${c.leads_count} leads.`,
-      color: c.status === "Running" ? "bg-emerald-500" : "bg-indigo-500"
-    })),
+    ...campaigns.map(c => {
+      const liveLeadsCount = leads.filter(l => l.campaign_id === c.id).length;
+      return {
+        time: new Date(c.created_at),
+        title: `Campaign '${c.name}'`,
+        desc: c.status === "Running" ? "Started and actively searching." : `Finished. Generated ${liveLeadsCount} leads.`,
+        color: c.status === "Running" ? "bg-emerald-500" : "bg-indigo-500"
+      };
+    }),
     ...leads.map(l => ({
       time: new Date(l.created_at),
       title: `New Lead: ${l.company.name}`,

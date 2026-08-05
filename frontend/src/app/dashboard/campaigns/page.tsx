@@ -109,7 +109,7 @@ export default function CampaignsPage() {
   const handleDeleteCampaign = async (id: string) => {
     if (!confirm("Are you sure you want to delete this campaign? All associated leads will also be deleted.")) return;
     try {
-      // Delete all leads associated with this campaign
+      // 1. Fully Dynamic Deletion: Delete all leads associated with this campaign
       const leadsRef = ref(database, 'leads');
       const leadsQuery = query(leadsRef, orderByChild('campaign_id'), equalTo(id));
       const snapshot = await get(leadsQuery);
@@ -125,7 +125,7 @@ export default function CampaignsPage() {
         await update(leadsRef, updates);
       }
 
-      // Delete the campaign itself
+      // 2. Delete the campaign itself
       const campaignRef = ref(database, `campaigns/${id}`);
       await remove(campaignRef);
     } catch (error) {
