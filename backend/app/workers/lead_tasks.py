@@ -90,12 +90,12 @@ def search_openstreetmap(niche: str, location: str, max_results_per_source: int 
     overpass_url = "https://overpass-api.de/api/interpreter"
     overpass_query = f"""
     [out:json][timeout:25];
-    area[name~"(?i)^{location}"]->.searchArea;
+    area[name~"^{location}",i]->.searchArea;
     (
-      node["name"~"(?i){niche_keyword}"](area.searchArea);
-      way["name"~"(?i){niche_keyword}"](area.searchArea);
-      node["office"~"(?i){niche_keyword}"](area.searchArea);
-      node["amenity"~"(?i){niche_keyword}"](area.searchArea);
+      node["name"~"{niche_keyword}",i](area.searchArea);
+      way["name"~"{niche_keyword}",i](area.searchArea);
+      node["office"~"{niche_keyword}",i](area.searchArea);
+      node["amenity"~"{niche_keyword}",i](area.searchArea);
     );
     out tags {max_results_per_source};
     """
@@ -164,7 +164,7 @@ def filter_best_leads(query: str, pool: list, count: int):
     {json.dumps(pool_data, indent=2)}
     
     Select up to {count} most relevant companies from this list. 
-    CRITICAL REQUIREMENT: You MUST return a diverse mix of sources. Select at least one lead from EACH available source (maps, linkedin, instagram, web, ai) if a valid one exists. Do not pick all leads from the same source!
+    CRITICAL REQUIREMENT: You MUST return a diverse mix of sources. Select at least one lead from EACH available source (maps, linkedin, instagram, web, ai, apollo, apify-social, github, openstreetmap) if a valid one exists. Do not pick all leads from the same source!
     Exclude directories (like Goodfirms, Justdial), job portals, or irrelevant results.
     Return ONLY a valid JSON list containing the exact IDs of the selected companies.
     Example: [0, 3, 5]

@@ -144,10 +144,11 @@ export default function DashboardPage() {
   const sourceData = [
     { name: 'Gemini AI', value: leads.filter(l => l.source === 'ai' || !l.source).length, color: '#6366f1' },
     { name: 'LinkedIn', value: leads.filter(l => l.source === 'linkedin').length, color: '#3b82f6' },
-    { name: 'Google Maps', value: leads.filter(l => l.source === 'maps').length, color: '#ef4444' },
+    { name: 'Google Maps', value: leads.filter(l => l.source === 'maps' || l.source === 'openstreetmap').length, color: '#ef4444' },
     { name: 'Instagram', value: leads.filter(l => l.source === 'instagram').length, color: '#ec4899' },
     { name: 'Apollo', value: leads.filter(l => l.source === 'apollo').length, color: '#f59e0b' },
     { name: 'GitHub', value: leads.filter(l => l.source === 'github').length, color: '#10b981' },
+    { name: 'Apify Social', value: leads.filter(l => l.source === 'apify-social').length, color: '#8b5cf6' },
   ].filter(d => d.value > 0);
 
   const last7Days = Array.from({ length: 7 }, (_, i) => {
