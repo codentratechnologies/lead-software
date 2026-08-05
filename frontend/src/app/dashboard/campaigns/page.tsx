@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { Play, Pause, ListFilter, Trash2, Eye, Plus, X, MapPin, Briefcase, Camera, Bot } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { ref, onValue, push, remove, update, serverTimestamp } from "firebase/database";
+import { ref, onValue, push, remove, update, serverTimestamp, get, query, orderByChild, equalTo } from "firebase/database";
 import { database } from "@/lib/firebase";
 
 type Campaign = {
@@ -109,12 +109,27 @@ export default function CampaignsPage() {
   const handleDeleteCampaign = async (id: string) => {
     if (!confirm("Are you sure you want to delete this campaign? All associated leads will also be deleted.")) return;
     try {
+      // Delete all leads associated with this campaign
+      const leadsRef = ref(database, 'leads');
+      const leadsQuery = query(leadsRef, orderByChild('campaign_id'), equalTo(id));
+      const snapshot = await get(leadsQuery);
+      
+      if (snapshot.exists()) {
+        const updates: Record<string, null> = {};
+        snapshot.forEach((childSnapshot) => {
+          if (childSnapshot.key) {
+            updates[childSnapshot.key] = null;
+          }
+        });
+        // Batch delete all matching leads
+        await update(leadsRef, updates);
+      }
+
+      // Delete the campaign itself
       const campaignRef = ref(database, `campaigns/${id}`);
       await remove(campaignRef);
-      // NOTE: Associated leads should ideally be deleted via cloud functions, 
-      // but for client-side we'll just remove the campaign node.
     } catch (error) {
-      console.error("Failed to delete campaign:", error);
+      console.error("Failed to delete campaign and its leads:", error);
     }
   };
 

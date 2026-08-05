@@ -102,7 +102,8 @@ def search_openstreetmap(niche: str, location: str, max_results_per_source: int 
     
     try:
         print(f"Searching OpenStreetMap for {niche} in {location}...")
-        response = httpx.post(overpass_url, data={"data": overpass_query}, timeout=30.0)
+        headers = {"User-Agent": "CodentraLeadGen/1.0"}
+        response = httpx.post(overpass_url, data={"data": overpass_query}, headers=headers, timeout=30.0)
         
         if response.status_code == 200:
             data = response.json()
@@ -202,10 +203,10 @@ def search_apollo(niche: str, location: str, max_results_per_source: int = 5):
         url = "https://api.apollo.io/v1/organizations/search"
         headers = {
             "Content-Type": "application/json",
-            "Cache-Control": "no-cache"
+            "Cache-Control": "no-cache",
+            "X-Api-Key": settings.APOLLO_API_KEY
         }
         data = {
-            "api_key": settings.APOLLO_API_KEY,
             "per_page": max_results_per_source
         }
         
@@ -266,7 +267,7 @@ def search_apify(niche: str, location: str, max_results_per_source: int = 5):
     results = []
     try:
         # Using Apify's Google Search Scraper to find Facebook/Twitter profiles
-        actor_id = "apify/google-search-scraper"
+        actor_id = "apify~google-search-scraper"
         url = f"https://api.apify.com/v2/acts/{actor_id}/run-sync-get-dataset-items"
         params = {"token": settings.APIFY_API_TOKEN}
         
