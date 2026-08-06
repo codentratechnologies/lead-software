@@ -143,6 +143,7 @@ export default function DashboardPage() {
   // Chart Data Processing
   const sourceData = [
     { name: 'Gemini AI', value: leads.filter(l => l.source === 'ai' || !l.source).length, color: '#6366f1' },
+    { name: 'Web Search', value: leads.filter(l => l.source === 'web').length, color: '#14b8a6' },
     { name: 'LinkedIn', value: leads.filter(l => l.source === 'linkedin').length, color: '#3b82f6' },
     { name: 'Google Maps', value: leads.filter(l => l.source === 'maps' || l.source === 'openstreetmap').length, color: '#ef4444' },
     { name: 'Instagram', value: leads.filter(l => l.source === 'instagram').length, color: '#ec4899' },

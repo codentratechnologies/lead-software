@@ -31,6 +31,8 @@ const getSourceLabel = (source: string) => {
     case "maps": return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-red-50 text-red-700 border border-red-200 uppercase tracking-wider">Google Maps</span>;
     case "linkedin": return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-50 text-blue-700 border border-blue-200 uppercase tracking-wider">LinkedIn</span>;
     case "instagram": return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-pink-50 text-pink-700 border border-pink-200 uppercase tracking-wider">Instagram</span>;
+    case "web": return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-teal-50 text-teal-700 border border-teal-200 uppercase tracking-wider">Web Search</span>;
+    case "apollo": return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider">Apollo</span>;
     default: return <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200 uppercase tracking-wider">Gemini AI</span>;
   }
 };
