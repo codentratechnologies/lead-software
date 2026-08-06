@@ -8,17 +8,29 @@ from firebase_admin import credentials, db
 from app.workers.lead_tasks import extract_intent_and_search, analyze_and_score_lead, scrape_website
 
 def init_firebase():
-    cred_path = os.path.join(os.path.dirname(__file__), "firebase-service-account.json")
-    if not os.path.exists(cred_path):
-        print(f"[Error] Service account key not found at {cred_path}")
-        print("Please download it from Firebase Console (Project Settings > Service accounts), rename it to 'firebase-service-account.json' and place it in the backend folder.")
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), "firebase-service-account.json"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "firebase-service-account.json"), # Root of git repo
+        "firebase-service-account.json",
+        "/etc/secrets/firebase-service-account.json"
+    ]
+    
+    cred_path = None
+    for p in possible_paths:
+        if os.path.exists(p):
+            cred_path = p
+            break
+            
+    if not cred_path:
+        print(f"[Error] Service account key not found! I checked: {possible_paths}")
+        print("Please download it from Firebase Console, rename it to 'firebase-service-account.json' and place it in the backend folder or upload it as a Secret File in Render.")
         exit(1)
         
     cred = credentials.Certificate(cred_path)
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://codentra-lead-generate-default-rtdb.asia-southeast1.firebasedatabase.app'
     })
-    print("[Success] Successfully connected to Firebase Realtime Database.")
+    print(f"[Success] Successfully connected to Firebase Realtime Database using {cred_path}.")
 
 def trigger_webhook(lead_data: dict, name: str, lead_score: int):
     webhook_url = os.environ.get("WEBHOOK_URL", "")
