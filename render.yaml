@@ -10,3 +10,21 @@ services:
         value: 3.11.0
       - key: GEMINI_API_KEY
         sync: false
+        
+  - type: worker
+    name: codentra-lead-worker
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: python firebase_worker.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APOLLO_API_KEY
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: APIFY_API_TOKEN
+        sync: false
