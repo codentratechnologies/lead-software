@@ -44,7 +44,9 @@ def process_campaign(campaign_id, campaign_data):
     leads_ref = db.reference('leads')
     leads_generated = 0
     
-    for comp_data in companies_data:
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
+    def process_single_company(comp_data):
         website = comp_data.get("website")
         name = comp_data.get("name")
         
@@ -86,11 +88,21 @@ def process_campaign(campaign_id, campaign_data):
         }
         
         leads_ref.push(lead_data)
-        leads_generated += 1
         print(f"   Generated lead: {name} (Score: {analysis.get('lead_score', 0)})")
         
         # Webhook Integration
         trigger_webhook(lead_data, name, analysis.get("lead_score", 0))
+        return True
+
+    print(f"   Processing {len(companies_data)} leads concurrently...")
+    with ThreadPoolExecutor(max_workers=10) as executor:
+        futures = [executor.submit(process_single_company, comp) for comp in companies_data]
+        for future in as_completed(futures):
+            try:
+                if future.result():
+                    leads_generated += 1
+            except Exception as e:
+                print(f"   Error processing lead: {e}")
         
     # Mark campaign as completed or update for schedule
     is_recurring = campaign_data.get("is_recurring", False)

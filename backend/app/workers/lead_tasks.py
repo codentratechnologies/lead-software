@@ -300,6 +300,8 @@ def search_apify(niche: str, location: str, max_results_per_source: int = 5):
         
     return results
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 def extract_intent_and_search(query: str):
     """Uses real multi-source search and Gemini for intent parsing & filtering."""
     parsed = parse_user_query(query)
@@ -311,21 +313,29 @@ def extract_intent_and_search(query: str):
     
     max_per_source = max(5, int(count / 2) + 1)
     
-    pool = search_duckduckgo(niche, location, max_per_source)
-    osm_pool = search_openstreetmap(niche, location, max_per_source + 2)
-    ai_pool = generate_ai_leads(niche, location, 3)
+    pool = []
     
-    # New sources
-    apollo_pool = search_apollo(niche, location, max_per_source)
-    github_pool = search_github(niche, location, max_per_source)
-    apify_pool = search_apify(niche, location, max_per_source)
-    
-    pool.extend(osm_pool)
-    pool.extend(ai_pool)
-    pool.extend(apollo_pool)
-    pool.extend(github_pool)
-    pool.extend(apify_pool)
-    
+    print("Searching all platforms concurrently...")
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        futures = {
+            executor.submit(search_duckduckgo, niche, location, max_per_source): "DuckDuckGo",
+            executor.submit(search_openstreetmap, niche, location, max_per_source + 2): "OpenStreetMap",
+            executor.submit(generate_ai_leads, niche, location, 3): "AI Generation",
+            executor.submit(search_apollo, niche, location, max_per_source): "Apollo",
+            executor.submit(search_github, niche, location, max_per_source): "GitHub",
+            executor.submit(search_apify, niche, location, max_per_source): "Apify Social"
+        }
+        
+        for future in as_completed(futures):
+            source_name = futures[future]
+            try:
+                res = future.result()
+                if res:
+                    pool.extend(res)
+                print(f"Finished searching {source_name}: found {len(res) if res else 0} results")
+            except Exception as e:
+                print(f"Error in {source_name} search: {e}")
+                
     print(f"Found {len(pool)} potential candidates from all sources.")
     
     best_leads = filter_best_leads(query, pool, count)

@@ -24,6 +24,18 @@ app.include_router(campaigns.router, prefix=f"{settings.API_V1_STR}/campaigns", 
 app.include_router(emails.router, prefix=f"{settings.API_V1_STR}/emails", tags=["emails"])
 app.include_router(followups.router, prefix=f"{settings.API_V1_STR}/followups", tags=["followups"])
 
+import threading
+from firebase_worker import init_firebase, poll_for_campaigns
+
+@app.on_event("startup")
+def startup_event():
+    print("Starting background AI worker inside Web Service...")
+    init_firebase()
+    
+    # Run the worker in a separate thread so it doesn't block the API
+    worker_thread = threading.Thread(target=poll_for_campaigns, daemon=True)
+    worker_thread.start()
+
 @app.get("/")
 def root():
     return {"message": "Welcome to Codentra AI Lead Generator API"}
