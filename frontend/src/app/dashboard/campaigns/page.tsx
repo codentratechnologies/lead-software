@@ -184,8 +184,8 @@ export default function CampaignsPage() {
   });
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
-      <div className="flex justify-between items-center mb-8 relative">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:justify-between items-start md:items-center gap-4 mb-8 relative">
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Active Campaigns</h1>
           <p className="text-slate-500 mt-1">Track the progress of your AI background workers.</p>

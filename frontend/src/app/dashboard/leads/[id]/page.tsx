@@ -129,7 +129,7 @@ export default function LeadDetailsPage() {
   );
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-4 md:p-8 max-w-6xl mx-auto">
       <button 
         onClick={() => router.push("/dashboard/leads")}
         className="flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 mb-6 transition-colors"
@@ -138,7 +138,7 @@ export default function LeadDetailsPage() {
         Back to Leads
       </button>
 
-      <div className="mb-8 flex items-start justify-between">
+      <div className="mb-8 flex flex-col md:flex-row items-start md:justify-between gap-6">
         <div>
           <div className="flex items-center gap-4 mb-2">
             <div className="p-3 bg-white rounded-xl shadow-sm border border-slate-200">
@@ -159,7 +159,7 @@ export default function LeadDetailsPage() {
           </div>
         </div>
         
-        <div className="flex flex-col items-end bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div className="w-full md:w-auto flex flex-col items-start md:items-end bg-white p-4 rounded-xl shadow-sm border border-slate-200">
           <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">AI Lead Score</span>
           <div className="flex items-center gap-2">
             <span className={`text-2xl font-bold font-mono tracking-tighter ${
@@ -316,7 +316,7 @@ export default function LeadDetailsPage() {
           Activity & Notes
         </h3>
         
-        <div className="flex gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <input 
             type="text" 
             placeholder="Add a note or log a call..." 
