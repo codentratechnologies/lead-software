@@ -169,14 +169,14 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-10"
       >
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-        <p className="text-slate-500 mt-2">Welcome back! Here's what's happening with your AI campaigns today.</p>
+        <p className="text-slate-500 mt-2">Welcome back! Here&apos;s what&apos;s happening with your AI campaigns today.</p>
       </motion.div>
       
       {loading ? (

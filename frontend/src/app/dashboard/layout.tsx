@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -10,7 +10,9 @@ import {
   BarChart,
   Settings,
   LogOut,
-  Sparkles
+  Sparkles,
+  Menu,
+  X
 } from 'lucide-react';
 import Image from 'next/image';
 
@@ -23,6 +25,9 @@ export default function DashboardLayout({
   const router = useRouter();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -44,30 +49,79 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans selection:bg-indigo-500/30">
+      
+      {/* Mobile Top Navigation */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 z-30 flex items-center justify-between px-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="relative w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm border border-slate-100 p-1">
+            <Image 
+              src="/codentra logo without text and bg.png" 
+              alt="Codentra Logo" 
+              fill
+              sizes="32px"
+              className="object-contain drop-shadow-sm p-1"
+            />
+          </div>
+          <div className="flex flex-col -gap-0.5">
+            <h1 className="text-lg font-bold text-slate-900 tracking-tight leading-none">
+              Codentra
+            </h1>
+          </div>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
+        >
+          <Menu size={24} />
+        </button>
+      </div>
+
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Sidebar - Premium Design */}
-      <aside className="w-64 bg-white/80 backdrop-blur-xl border-r border-slate-200/60 flex flex-col relative z-20 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+      <aside className={`fixed md:static inset-y-0 left-0 w-64 bg-white/95 md:bg-white/80 backdrop-blur-xl border-r border-slate-200/60 flex flex-col z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)] transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}>
         <div className="h-24 flex items-center px-6 border-b border-slate-100 relative overflow-hidden">
           {/* Subtle gradient background for logo area */}
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/50 to-transparent pointer-events-none" />
           
-          <div className="flex items-center gap-3 relative z-10">
-            <div className="relative w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-slate-100 p-1">
-              <Image 
-                src="/codentra logo without text and bg.png" 
-                alt="Codentra Logo" 
-                fill
-                sizes="40px"
-                className="object-contain drop-shadow-sm p-1.5"
-              />
+          <div className="flex items-center justify-between w-full relative z-10">
+            <div className="flex items-center gap-3">
+              <div className="relative w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-slate-100 p-1">
+                <Image 
+                  src="/codentra logo without text and bg.png" 
+                  alt="Codentra Logo" 
+                  fill
+                  sizes="40px"
+                  className="object-contain drop-shadow-sm p-1.5"
+                />
+              </div>
+              <div className="flex flex-col -gap-0.5">
+                <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">
+                  Codentra
+                </h1>
+                <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">
+                  Lead Software
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col -gap-0.5">
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">
-                Codentra
-              </h1>
-              <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-[0.2em] mt-1">
-                Lead Software
-              </span>
-            </div>
+            {/* Mobile Close Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="md:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
+            >
+              <X size={20} />
+            </button>
           </div>
         </div>
 
@@ -75,7 +129,12 @@ export default function DashboardLayout({
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link key={item.href} href={item.href} className="relative block group">
+              <Link 
+                key={item.href} 
+                href={item.href} 
+                className="relative block group"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
                 <AnimatePresence>
                   {isActive && (
                     <motion.div
@@ -121,8 +180,7 @@ export default function DashboardLayout({
         </div>
 
         <div className="p-4 border-t border-slate-100 space-y-1">
-
-          <button onClick={() => setShowLogoutModal(true)} className="w-full flex items-center space-x-3 px-4 py-2.5 text-slate-500 rounded-xl hover:text-red-600 hover:bg-red-50 transition-colors group">
+          <button onClick={() => { setShowLogoutModal(true); setIsMobileMenuOpen(false); }} className="w-full flex items-center space-x-3 px-4 py-2.5 text-slate-500 rounded-xl hover:text-red-600 hover:bg-red-50 transition-colors group">
             <LogOut size={20} className="text-slate-400 group-hover:text-red-500" />
             <span className="text-sm font-medium">Logout</span>
           </button>
@@ -130,7 +188,7 @@ export default function DashboardLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-auto relative bg-slate-50/50">
+      <main className="flex-1 overflow-auto relative bg-slate-50/50 pt-16 md:pt-0">
         <div className="relative z-10 min-h-full">
           {children}
         </div>
@@ -139,7 +197,7 @@ export default function DashboardLayout({
       {/* Logout Confirmation Modal */}
       <AnimatePresence>
         {showLogoutModal && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
