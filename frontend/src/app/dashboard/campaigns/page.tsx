@@ -88,6 +88,15 @@ export default function CampaignsPage() {
         leads_generated: 0,
         created_at: serverTimestamp()
       });
+      
+      // Wake up the Render backend if it went to sleep (Free tier limitation)
+      try {
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
+        fetch(backendUrl).catch(() => {});
+      } catch (e) {
+        // ignore
+      }
+
       setShowNewModal(false);
       setNewCampaign({ name: "", search_query: "" });
     } catch (error) {

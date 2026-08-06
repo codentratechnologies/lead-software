@@ -10,6 +10,10 @@ from app.workers.lead_tasks import extract_intent_and_search, analyze_and_score_
 import json
 
 def init_firebase():
+    if firebase_admin._apps:
+        print("[Success] Firebase app already initialized.")
+        return
+        
     cred_json = os.environ.get("FIREBASE_CREDENTIALS")
     cred = None
     cred_path = None
