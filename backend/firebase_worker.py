@@ -7,30 +7,46 @@ from firebase_admin import credentials, db
 # Import existing AI logic from the backend
 from app.workers.lead_tasks import extract_intent_and_search, analyze_and_score_lead, scrape_website
 
+import json
+
 def init_firebase():
-    possible_paths = [
-        os.path.join(os.path.dirname(__file__), "firebase-service-account.json"),
-        os.path.join(os.path.dirname(os.path.dirname(__file__)), "firebase-service-account.json"), # Root of git repo
-        "firebase-service-account.json",
-        "/etc/secrets/firebase-service-account.json"
-    ]
-    
+    cred_json = os.environ.get("FIREBASE_CREDENTIALS")
+    cred = None
     cred_path = None
-    for p in possible_paths:
-        if os.path.exists(p):
-            cred_path = p
-            break
-            
-    if not cred_path:
-        print(f"[Error] Service account key not found! I checked: {possible_paths}")
-        print("Please download it from Firebase Console, rename it to 'firebase-service-account.json' and place it in the backend folder or upload it as a Secret File in Render.")
-        exit(1)
+    
+    if cred_json:
+        try:
+            cred_dict = json.loads(cred_json)
+            cred = credentials.Certificate(cred_dict)
+            print("[Success] Loaded Firebase credentials from FIREBASE_CREDENTIALS environment variable.")
+        except Exception as e:
+            print(f"[Error] Failed to parse FIREBASE_CREDENTIALS env var: {e}")
+            exit(1)
+    else:
+        possible_paths = [
+            os.path.join(os.path.dirname(__file__), "firebase-service-account.json"),
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), "firebase-service-account.json"),
+            "firebase-service-account.json",
+            "/etc/secrets/firebase-service-account.json"
+        ]
         
-    cred = credentials.Certificate(cred_path)
+        for p in possible_paths:
+            if os.path.exists(p):
+                cred_path = p
+                break
+                
+        if not cred_path:
+            print(f"[Error] Service account key not found! I checked: {possible_paths}")
+            print("Please create an Environment Variable named FIREBASE_CREDENTIALS in Render and paste the entire JSON file contents into it.")
+            exit(1)
+            
+        cred = credentials.Certificate(cred_path)
+        print(f"[Success] Loaded Firebase credentials from file: {cred_path}")
+
     firebase_admin.initialize_app(cred, {
         'databaseURL': 'https://codentra-lead-generate-default-rtdb.asia-southeast1.firebasedatabase.app'
     })
-    print(f"[Success] Successfully connected to Firebase Realtime Database using {cred_path}.")
+    print("[Success] Successfully connected to Firebase Realtime Database.")
 
 def trigger_webhook(lead_data: dict, name: str, lead_score: int):
     webhook_url = os.environ.get("WEBHOOK_URL", "")
