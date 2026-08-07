@@ -140,16 +140,23 @@ def generate_ai_leads(niche: str, location: str, count: int = 2):
       {{"name": "Company", "website": "https://example.com", "description": "AI generated recommendation", "source": "ai"}}
     ]
     """
-    try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        response = model.generate_content(prompt)
-        raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text[7:-3].strip()
-        return json.loads(raw_text)
-    except Exception as e:
-        print(f"Error generating AI leads: {e}")
-        return []
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            model = genai.GenerativeModel('gemini-flash-latest')
+            response = model.generate_content(prompt)
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:-3].strip()
+            return json.loads(raw_text)
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries - 1:
+                print(f"Rate limit hit in generate_ai_leads, retrying in {5 * (attempt + 1)}s...")
+                import time
+                time.sleep(5 * (attempt + 1))
+                continue
+            print(f"Error generating AI leads: {e}")
+            return []
 
 def filter_best_leads(query: str, pool: list, count: int):
     if not pool:
@@ -170,28 +177,35 @@ def filter_best_leads(query: str, pool: list, count: int):
     Example: [0, 3, 5]
     """
     
-    try:
-        model = genai.GenerativeModel('gemini-flash-latest')
-        response = model.generate_content(prompt)
-        raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text[7:-3].strip()
-        selected_ids = json.loads(raw_text)
-        
-        filtered = []
-        for pid in selected_ids:
-            if 0 <= pid < len(pool):
-                item = pool[pid]
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            model = genai.GenerativeModel('gemini-flash-latest')
+            response = model.generate_content(prompt)
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:-3].strip()
+            selected_ids = json.loads(raw_text)
+            
+            filtered = []
+            for pid in selected_ids:
+                if 0 <= pid < len(pool):
+                    item = pool[pid]
+                    item["industry"] = "Various"
+                    item["location"] = "Unknown"
+                    filtered.append(item)
+            return filtered
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries - 1:
+                print(f"Rate limit hit in filter_best_leads, retrying in {5 * (attempt + 1)}s...")
+                import time
+                time.sleep(5 * (attempt + 1))
+                continue
+            print(f"Error filtering leads: {e}")
+            for item in pool[:count]:
                 item["industry"] = "Various"
                 item["location"] = "Unknown"
-                filtered.append(item)
-        return filtered
-    except Exception as e:
-        print(f"Error filtering leads: {e}")
-        for item in pool[:count]:
-            item["industry"] = "Various"
-            item["location"] = "Unknown"
-        return pool[:count]
+            return pool[:count]
 
 def search_apollo(niche: str, location: str, max_results_per_source: int = 5):
     if not settings.APOLLO_API_KEY:
@@ -429,23 +443,31 @@ def analyze_and_score_lead(company_name: str, website_text: str):
     }}
     """
     model = genai.GenerativeModel('gemini-flash-latest')
-    try:
-        response = model.generate_content(prompt)
-        raw_text = response.text.strip()
-        if raw_text.startswith("```json"):
-            raw_text = raw_text[7:-3].strip()
-        return json.loads(raw_text)
-    except Exception as e:
-        print(f"Error in analyze_and_score_lead for {company_name}: {e}")
-        return {
-            "problems_identified": ["Could not analyze"], 
-            "recommended_solution": ["General IT Consulting"], 
-            "lead_score": 50,
-            "contact_person": "",
-            "email": "",
-            "phone": "",
-            "tech_stack": []
-        }
+    
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            response = model.generate_content(prompt)
+            raw_text = response.text.strip()
+            if raw_text.startswith("```json"):
+                raw_text = raw_text[7:-3].strip()
+            return json.loads(raw_text)
+        except Exception as e:
+            if "429" in str(e) and attempt < max_retries - 1:
+                print(f"Rate limit hit in analyze_and_score_lead, retrying in {5 * (attempt + 1)}s...")
+                import time
+                time.sleep(5 * (attempt + 1))
+                continue
+            print(f"Error in analyze_and_score_lead for {company_name}: {e}")
+            return {
+                "problems_identified": ["Could not analyze"], 
+                "recommended_solution": ["General IT Consulting"], 
+                "lead_score": 50,
+                "contact_person": "",
+                "email": "",
+                "phone": "",
+                "tech_stack": []
+            }
 
 @shared_task
 def process_lead_campaign(campaign_id: int):
