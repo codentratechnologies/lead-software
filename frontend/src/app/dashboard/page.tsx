@@ -129,15 +129,15 @@ export default function DashboardPage() {
       color: "bg-purple-500"
     }))
   ]
-  .sort((a, b) => b.time.getTime() - a.time.getTime())
-  .slice(0, 5); // Take top 5 recent activities
+    .sort((a, b) => b.time.getTime() - a.time.getTime())
+    .slice(0, 5); // Take top 5 recent activities
 
   const timeAgo = (date: Date) => {
     const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
     if (seconds < 60) return `${seconds}s ago`;
-    if (seconds < 3600) return `${Math.floor(seconds/60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds/3600)}h ago`;
-    return `${Math.floor(seconds/86400)}d ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
   };
 
   // Chart Data Processing
@@ -160,46 +160,40 @@ export default function DashboardPage() {
       fullDate: d.toDateString()
     };
   });
-  
+
   const timeData = last7Days.map(day => {
     const count = leads.filter(l => {
-        const d = typeof l.created_at === 'number' ? new Date(l.created_at) : new Date(l.created_at);
-        return d.toDateString() === day.fullDate;
+      const d = typeof l.created_at === 'number' ? new Date(l.created_at) : new Date(l.created_at);
+      return d.toDateString() === day.fullDate;
     }).length;
     return { name: day.date, leads: count };
   });
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto relative min-h-screen">
-      {/* Animated Grid Background */}
-      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
-        <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent animate-scanline"></div>
-      </div>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-10"
+      >
+        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+        <p className="text-slate-500 mt-2">Welcome back! Here&apos;s what&apos;s happening with your AI campaigns today.</p>
+      </motion.div>
 
-      <div className="relative z-10">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
-        >
-          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-          <p className="text-slate-500 mt-2">Welcome back! Here&apos;s what&apos;s happening with your AI campaigns today.</p>
-        </motion.div>
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
         </div>
       ) : (
         <>
-          <motion.div 
+          <motion.div
             variants={containerVariants}
             initial="hidden"
             animate="show"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10"
           >
             {stats.map((stat, idx) => (
-              <motion.div 
+              <motion.div
                 key={idx}
                 variants={itemVariants}
                 whileHover={{ y: -5, transition: { duration: 0.2 } }}
@@ -207,28 +201,25 @@ export default function DashboardPage() {
               >
                 {/* Subtle gradient hover effect */}
                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-50/0 to-indigo-50/0 group-hover:from-indigo-50/50 group-hover:to-violet-50/50 transition-colors duration-500 z-0" />
-                
+
                 <div className="relative z-10 flex justify-between items-start">
                   <div>
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</h3>
                     <p className="text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">{stat.value}</p>
                   </div>
-                  <div className={`p-3 rounded-xl ${stat.bg} shadow-inner bg-opacity-50 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300 relative`}>
-                    {stat.label === "Active Campaigns" && stat.value > 0 && (
-                      <div className="absolute inset-0 bg-emerald-400 rounded-xl animate-pulse-ring opacity-50 z-0"></div>
-                    )}
-                    <stat.icon size={22} className={`${stat.color} relative z-10`} />
+                  <div className={`p-3 rounded-xl ${stat.bg} shadow-inner bg-opacity-50 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon size={22} className={stat.color} />
                   </div>
                 </div>
                 <div className="relative z-10 mt-5 flex items-center text-sm">
-                  <span className="text-slate-500 font-medium bg-slate-100/80 backdrop-blur-sm px-2 py-1 rounded-md">{stat.change}</span>
+                  <span className="text-slate-500 font-medium bg-slate-100/50 px-2 py-1 rounded-md">{stat.change}</span>
                 </div>
               </motion.div>
             ))}
           </motion.div>
-          
+
           {/* Charts Row */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: 0.15 }}
@@ -243,7 +234,7 @@ export default function DashboardPage() {
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
                     <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} />
-                    <RechartsTooltip 
+                    <RechartsTooltip
                       contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       cursor={{ stroke: '#cbd5e1', strokeWidth: 1, strokeDasharray: '4 4' }}
                     />
@@ -252,7 +243,7 @@ export default function DashboardPage() {
                 </ResponsiveContainer>
               </div>
             </div>
-            
+
             {/* Pie Chart */}
             <div className="lg:col-span-1 bg-white/70 backdrop-blur-xl border border-slate-200/60 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
               <h3 className="text-lg font-bold text-slate-900 mb-2">Leads by Source</h3>
@@ -273,7 +264,7 @@ export default function DashboardPage() {
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         ))}
                       </Pie>
-                      <RechartsTooltip 
+                      <RechartsTooltip
                         contentStyle={{ borderRadius: '12px', border: '1px solid #e2e8f0', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                       />
                       <Legend verticalAlign="bottom" height={36} iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
@@ -285,8 +276,8 @@ export default function DashboardPage() {
               </div>
             </div>
           </motion.div>
-          
-          <motion.div 
+
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: 0.2 }}
@@ -304,11 +295,11 @@ export default function DashboardPage() {
             ) : (
               <div className="space-y-6 relative before:absolute before:inset-0 before:ml-2.5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-px before:bg-gradient-to-b before:from-slate-200 before:via-slate-200 before:to-transparent">
                 {recentActivities.map((item, idx) => (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 + (idx * 0.1) }}
-                    key={idx} 
+                    key={idx}
                     className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active"
                   >
                     <div className={`flex items-center justify-center w-5 h-5 rounded-full border-4 border-white ${item.color} shadow-sm shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 ring-4 ring-slate-50 group-hover:scale-125 transition-transform duration-300`} />
@@ -326,7 +317,6 @@ export default function DashboardPage() {
           </motion.div>
         </>
       )}
-      </div>
     </div>
   );
 }

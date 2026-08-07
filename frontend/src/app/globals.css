@@ -49,15 +49,19 @@
 }
 
 :root {
-  --background: oklch(0.985 0 0); /* slate-50 */
-  --foreground: oklch(0.145 0 0); /* slate-900 */
+  --background: oklch(0.985 0 0);
+  /* slate-50 */
+  --foreground: oklch(0.145 0 0);
+  /* slate-900 */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.488 0.243 264.376); /* indigo-600 */
+  --primary: oklch(0.488 0.243 264.376);
+  /* indigo-600 */
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0); /* slate-100 */
+  --secondary: oklch(0.97 0 0);
+  /* slate-100 */
   --secondary-foreground: oklch(0.205 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
@@ -72,8 +76,10 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.75rem; /* Larger radius for modern look */
-  --sidebar: oklch(1 0 0 / 70%); /* Glassmorphism sidebar */
+  --radius: 0.75rem;
+  /* Larger radius for modern look */
+  --sidebar: oklch(1 0 0 / 70%);
+  /* Glassmorphism sidebar */
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -84,13 +90,16 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0); /* slate-900 */
+  --background: oklch(0.145 0 0);
+  /* slate-900 */
   --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0 / 50%); /* Glassmorphism card */
+  --card: oklch(0.205 0 0 / 50%);
+  /* Glassmorphism card */
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.546 0.245 262.881); /* indigo-500 */
+  --primary: oklch(0.546 0.245 262.881);
+  /* indigo-500 */
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -107,7 +116,8 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.145 0 0 / 70%); /* Glassmorphism sidebar */
+  --sidebar: oklch(0.145 0 0 / 70%);
+  /* Glassmorphism sidebar */
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.546 0.245 262.881);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -121,9 +131,11 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     /* Set default font to the new outfit variable */
     font-family: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
@@ -132,66 +144,22 @@
 
 @layer utilities {
   .glass-panel {
-    @apply bg-white/40 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+    @apply bg-white/40 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31, 38, 135, 0.07)];
   }
+
   .dark .glass-panel {
-    @apply bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 shadow-[0_8px_32px_0_rgba(0,0,0,0.3)];
+    @apply bg-slate-900/40 backdrop-blur-xl border border-slate-700/50 shadow-[0_8px_32px_0_rgba(0, 0, 0, 0.3)];
   }
-  
+
   /* Gradient text */
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-500 to-violet-500;
   }
-  
+
   /* Shimmer animation for buttons */
   @keyframes shimmer {
     100% {
       transform: translateX(100%);
     }
-  }
-
-  /* Automation Animations */
-  @keyframes scanline {
-    0% { transform: translateY(-100%); opacity: 0; }
-    10% { opacity: 1; }
-    90% { opacity: 1; }
-    100% { transform: translateY(100%); opacity: 0; }
-  }
-  .animate-scanline {
-    animation: scanline 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  @keyframes pulse-ring {
-    0% { transform: scale(0.8); box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.7); opacity: 1; }
-    100% { transform: scale(1.5); box-shadow: 0 0 0 10px rgba(99, 102, 241, 0); opacity: 0; }
-  }
-  .animate-pulse-ring {
-    animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  }
-
-  @keyframes radar-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-  .animate-radar {
-    animation: radar-spin 3s linear infinite;
-  }
-
-  @keyframes typing {
-    from { width: 0 }
-    to { width: 100% }
-  }
-  .animate-typing {
-    overflow: hidden;
-    white-space: nowrap;
-    animation: typing 2s steps(40, end);
-  }
-
-  .bg-grid-pattern {
-    background-size: 40px 40px;
-    background-image: linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
-    mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
-    -webkit-mask-image: linear-gradient(to bottom, transparent, black 10%, black 90%, transparent);
   }
 }

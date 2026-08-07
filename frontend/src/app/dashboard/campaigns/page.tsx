@@ -88,11 +88,11 @@ export default function CampaignsPage() {
         leads_generated: 0,
         created_at: serverTimestamp()
       });
-      
+
       // Wake up the Render backend if it went to sleep (Free tier limitation)
       try {
         const backendUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:8000';
-        fetch(backendUrl).catch(() => {});
+        fetch(backendUrl).catch(() => { });
       } catch (e) {
         // ignore
       }
@@ -122,7 +122,7 @@ export default function CampaignsPage() {
       const leadsRef = ref(database, 'leads');
       const leadsQuery = query(leadsRef, orderByChild('campaign_id'), equalTo(id));
       const snapshot = await get(leadsQuery);
-      
+
       if (snapshot.exists()) {
         const updates: Record<string, null> = {};
         snapshot.forEach((childSnapshot) => {
@@ -145,16 +145,7 @@ export default function CampaignsPage() {
   const getStatusPill = (status: string) => {
     switch (status) {
       case "Running":
-        return (
-          <span className="relative inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 overflow-hidden shadow-sm">
-            <span className="absolute inset-0 bg-emerald-400/20 animate-scanline"></span>
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="relative z-10 tracking-widest uppercase">Running</span>
-          </span>
-        );
+        return <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Running</span>;
       case "Completed":
         return <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">Completed</span>;
       case "Stopped":
@@ -316,7 +307,7 @@ export default function CampaignsPage() {
                       <div className="text-xs text-slate-500">{new Date(camp.created_at).toLocaleString()}</div>
                     </td>
                     <td className="px-6 py-5 align-top">
-                      <div className={`text-sm font-mono text-slate-700 bg-slate-50/50 p-2 rounded border border-slate-100 ${camp.status === 'Running' ? 'animate-typing' : ''}`} title={camp.search_query} style={{ display: 'inline-block', maxWidth: '100%' }}>
+                      <div className="text-sm text-slate-600 line-clamp-2 max-w-md" title={camp.search_query}>
                         {camp.search_query}
                       </div>
                     </td>
@@ -324,18 +315,13 @@ export default function CampaignsPage() {
                       {getStatusPill(camp.status)}
                     </td>
                     <td className="px-6 py-5 align-top">
-                      <div className="relative inline-flex items-center justify-center">
-                        {camp.status === 'Running' && leadsCount[camp.id] > 0 && (
-                          <div className="absolute inset-0 bg-indigo-400 rounded-lg animate-ping opacity-20"></div>
-                        )}
-                        <span className={`inline-flex items-center justify-center min-w-[2.5rem] px-3 py-1.5 rounded-lg text-sm font-bold border shadow-sm transition-all duration-300 ${camp.status === 'Running' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-indigo-100' : 'bg-slate-50 text-slate-700 border-slate-200 font-mono'}`} title="Live Leads Count">
-                          {leadsCount[camp.id] || 0}
-                        </span>
-                      </div>
+                      <span className="inline-flex items-center justify-center min-w-[2.5rem] px-2.5 py-1 rounded bg-slate-50 text-slate-700 font-mono text-sm border border-slate-200 shadow-sm" title="Live Leads Count">
+                        {leadsCount[camp.id] || 0}
+                      </span>
                     </td>
                     <td className="px-6 py-5 align-top text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <Link 
+                        <Link
                           href={`/dashboard/leads?campaign_id=${camp.id}`}
                           title="View Leads"
                           className="inline-flex items-center justify-center text-slate-500 bg-white hover:bg-indigo-50 hover:text-indigo-600 p-2 rounded-lg transition-all border border-transparent hover:border-indigo-100"

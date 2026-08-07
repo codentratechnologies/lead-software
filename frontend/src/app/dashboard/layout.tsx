@@ -49,14 +49,14 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen bg-slate-50 text-slate-900 overflow-hidden font-sans selection:bg-indigo-500/30">
-      
+
       {/* Mobile Top Navigation */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-xl border-b border-slate-200/60 z-30 flex items-center justify-between px-4 shadow-sm">
         <div className="flex items-center gap-3">
           <div className="relative w-8 h-8 flex items-center justify-center bg-white rounded-lg shadow-sm border border-slate-100 p-1">
-            <Image 
-              src="/codentra logo without text and bg.png" 
-              alt="Codentra Logo" 
+            <Image
+              src="/codentra logo without text and bg.png"
+              alt="Codentra Logo"
               fill
               sizes="32px"
               className="object-contain drop-shadow-sm p-1"
@@ -68,7 +68,7 @@ export default function DashboardLayout({
             </h1>
           </div>
         </div>
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(true)}
           className="p-2 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
         >
@@ -94,13 +94,13 @@ export default function DashboardLayout({
         <div className="h-24 flex items-center px-6 border-b border-slate-100 relative overflow-hidden">
           {/* Subtle gradient background for logo area */}
           <div className="absolute inset-0 bg-gradient-to-r from-indigo-50/50 to-transparent pointer-events-none" />
-          
+
           <div className="flex items-center justify-between w-full relative z-10">
             <div className="flex items-center gap-3">
               <div className="relative w-10 h-10 flex items-center justify-center bg-white rounded-xl shadow-sm border border-slate-100 p-1">
-                <Image 
-                  src="/codentra logo without text and bg.png" 
-                  alt="Codentra Logo" 
+                <Image
+                  src="/codentra logo without text and bg.png"
+                  alt="Codentra Logo"
                   fill
                   sizes="40px"
                   className="object-contain drop-shadow-sm p-1.5"
@@ -116,7 +116,7 @@ export default function DashboardLayout({
               </div>
             </div>
             {/* Mobile Close Button */}
-            <button 
+            <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="md:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
             >
@@ -129,9 +129,9 @@ export default function DashboardLayout({
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
-              <Link 
-                key={item.href} 
-                href={item.href} 
+              <Link
+                key={item.href}
+                href={item.href}
                 className="relative block group"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
@@ -147,14 +147,14 @@ export default function DashboardLayout({
                     />
                   )}
                 </AnimatePresence>
-                
+
                 <div className={`relative flex items-center space-x-3 px-4 py-3 rounded-xl transition-all duration-200 ${isActive ? 'text-indigo-700 font-semibold' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                   }`}>
                   <item.icon size={20} className={`transition-colors duration-200 ${isActive ? 'text-indigo-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
                   <span className="text-sm tracking-wide">{item.label}</span>
-                  
+
                   {isActive && (
-                    <motion.div 
+                    <motion.div
                       layoutId="active-indicator"
                       className="absolute left-0 w-1 h-6 bg-indigo-600 rounded-r-full"
                     />
@@ -167,24 +167,14 @@ export default function DashboardLayout({
 
         {/* Premium Upgrade / Status Card */}
         <div className="px-4 pb-4">
-          <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-4 text-white relative overflow-hidden shadow-lg shadow-indigo-500/30 border border-indigo-400/30">
-            {/* Animated Background Elements */}
-            <div className="absolute inset-0 overflow-hidden opacity-20">
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_90deg_at_50%_50%,#ffffff00_0%,#ffffff00_80%,#ffffff40_100%)] animate-radar"></div>
-            </div>
-            
-            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl animate-pulse" />
-            
+          <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-4 text-white relative overflow-hidden shadow-lg shadow-indigo-500/20">
+            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/10 rounded-full blur-xl" />
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-indigo-200 rounded-full animate-pulse-ring"></div>
-                  <Sparkles size={16} className="text-indigo-100 relative z-10" />
-                </div>
-                <h4 className="text-sm font-semibold tracking-wide">Pro Active</h4>
+                <Sparkles size={16} className="text-indigo-200" />
+                <h4 className="text-sm font-semibold">Pro Active</h4>
               </div>
-              <p className="text-xs text-indigo-100 opacity-90 mt-1 font-medium">Your AI agent is searching 24/7.</p>
+              <p className="text-xs text-indigo-100 opacity-90">Your AI agent is searching 24/7.</p>
             </div>
           </div>
         </div>
