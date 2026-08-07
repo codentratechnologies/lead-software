@@ -167,14 +167,24 @@ export default function DashboardLayout({
 
         {/* Premium Upgrade / Status Card */}
         <div className="px-4 pb-4">
-          <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-4 text-white relative overflow-hidden shadow-lg shadow-indigo-500/20">
-            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/10 rounded-full blur-xl" />
+          <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-4 text-white relative overflow-hidden shadow-lg shadow-indigo-500/30 border border-indigo-400/30">
+            {/* Animated Background Elements */}
+            <div className="absolute inset-0 overflow-hidden opacity-20">
+              <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[200%] bg-[conic-gradient(from_90deg_at_50%_50%,#ffffff00_0%,#ffffff00_80%,#ffffff40_100%)] animate-radar"></div>
+            </div>
+            
+            <div className="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-white/20 rounded-full blur-xl animate-pulse" />
+            
             <div className="relative z-10">
               <div className="flex items-center gap-2 mb-1">
-                <Sparkles size={16} className="text-indigo-200" />
-                <h4 className="text-sm font-semibold">Pro Active</h4>
+                <div className="relative">
+                  <div className="absolute inset-0 bg-indigo-200 rounded-full animate-pulse-ring"></div>
+                  <Sparkles size={16} className="text-indigo-100 relative z-10" />
+                </div>
+                <h4 className="text-sm font-semibold tracking-wide">Pro Active</h4>
               </div>
-              <p className="text-xs text-indigo-100 opacity-90">Your AI agent is searching 24/7.</p>
+              <p className="text-xs text-indigo-100 opacity-90 mt-1 font-medium">Your AI agent is searching 24/7.</p>
             </div>
           </div>
         </div>

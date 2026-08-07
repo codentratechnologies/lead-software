@@ -170,16 +170,22 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-10"
-      >
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
-        <p className="text-slate-500 mt-2">Welcome back! Here&apos;s what&apos;s happening with your AI campaigns today.</p>
-      </motion.div>
-      
+    <div className="p-4 md:p-8 max-w-7xl mx-auto relative min-h-screen">
+      {/* Animated Grid Background */}
+      <div className="absolute inset-0 z-0 opacity-30 pointer-events-none">
+        <div className="absolute inset-0 bg-grid-pattern [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent animate-scanline"></div>
+      </div>
+
+      <div className="relative z-10">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10"
+        >
+          <h1 className="text-3xl font-bold text-slate-900 tracking-tight">Dashboard Overview</h1>
+          <p className="text-slate-500 mt-2">Welcome back! Here&apos;s what&apos;s happening with your AI campaigns today.</p>
+        </motion.div>
       {loading ? (
         <div className="flex justify-center items-center py-20">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
@@ -207,12 +213,15 @@ export default function DashboardPage() {
                     <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wider">{stat.label}</h3>
                     <p className="text-3xl font-extrabold text-slate-900 mt-2 tracking-tight">{stat.value}</p>
                   </div>
-                  <div className={`p-3 rounded-xl ${stat.bg} shadow-inner bg-opacity-50 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300`}>
-                    <stat.icon size={22} className={stat.color} />
+                  <div className={`p-3 rounded-xl ${stat.bg} shadow-inner bg-opacity-50 backdrop-blur-sm group-hover:scale-110 transition-transform duration-300 relative`}>
+                    {stat.label === "Active Campaigns" && stat.value > 0 && (
+                      <div className="absolute inset-0 bg-emerald-400 rounded-xl animate-pulse-ring opacity-50 z-0"></div>
+                    )}
+                    <stat.icon size={22} className={`${stat.color} relative z-10`} />
                   </div>
                 </div>
                 <div className="relative z-10 mt-5 flex items-center text-sm">
-                  <span className="text-slate-500 font-medium bg-slate-100/50 px-2 py-1 rounded-md">{stat.change}</span>
+                  <span className="text-slate-500 font-medium bg-slate-100/80 backdrop-blur-sm px-2 py-1 rounded-md">{stat.change}</span>
                 </div>
               </motion.div>
             ))}
@@ -317,6 +326,7 @@ export default function DashboardPage() {
           </motion.div>
         </>
       )}
+      </div>
     </div>
   );
 }
