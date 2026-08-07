@@ -346,7 +346,20 @@ def extract_intent_and_search(query: str):
 def scrape_website(url: str) -> str:
     """Scrapes a website and returns its text content using httpx. Enhances with /contact or /about if needed."""
     try:
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"}
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Accept-Encoding": "gzip, deflate, br",
+            "Sec-Ch-Ua": '"Google Chrome";v="123", "Not:A-Brand";v="8", "Chromium";v="123"',
+            "Sec-Ch-Ua-Mobile": "?0",
+            "Sec-Ch-Ua-Platform": '"Windows"',
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Sec-Fetch-User": "?1",
+            "Upgrade-Insecure-Requests": "1"
+        }
         response = httpx.get(url, timeout=15.0, headers=headers, follow_redirects=True)
         response.raise_for_status()
         
@@ -422,7 +435,8 @@ def analyze_and_score_lead(company_name: str, website_text: str):
         if raw_text.startswith("```json"):
             raw_text = raw_text[7:-3].strip()
         return json.loads(raw_text)
-    except:
+    except Exception as e:
+        print(f"Error in analyze_and_score_lead for {company_name}: {e}")
         return {
             "problems_identified": ["Could not analyze"], 
             "recommended_solution": ["General IT Consulting"], 

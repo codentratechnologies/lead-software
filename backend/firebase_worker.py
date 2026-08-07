@@ -127,10 +127,11 @@ def process_campaign(campaign_id, campaign_data):
         
         # Webhook Integration
         trigger_webhook(lead_data, name, analysis.get("lead_score", 0))
+        time.sleep(2)  # Delay to respect Gemini API rate limits
         return True
 
     print(f"   Processing {len(companies_data)} leads concurrently...")
-    with ThreadPoolExecutor(max_workers=10) as executor:
+    with ThreadPoolExecutor(max_workers=2) as executor:
         futures = [executor.submit(process_single_company, comp) for comp in companies_data]
         for future in as_completed(futures):
             try:
