@@ -53,7 +53,10 @@ def init_firebase():
     print("[Success] Successfully connected to Firebase Realtime Database.")
 
 def trigger_webhook(lead_data: dict, name: str, lead_score: int):
-    webhook_url = os.environ.get("WEBHOOK_URL", "")
+    # Fetch webhook URL from Firebase instead of environment variables
+    settings_ref = db.reference('settings/webhook_url')
+    webhook_url = settings_ref.get()
+    
     if webhook_url and lead_score > 80:
         try:
             httpx.post(webhook_url, json={"lead": lead_data, "event": "high_score_lead"}, timeout=5.0)

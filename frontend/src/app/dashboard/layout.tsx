@@ -45,6 +45,7 @@ export default function DashboardLayout({
     { href: "/dashboard/search", label: "AI Lead Search", icon: Search },
     { href: "/dashboard/today-leads", label: "Today's Leads", icon: Users },
     { href: "/dashboard/campaigns", label: "Campaigns", icon: BarChart },
+    { href: "/dashboard/settings", label: "Settings", icon: Settings },
   ];
 
   return (
