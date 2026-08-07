@@ -155,6 +155,19 @@ def process_campaign(campaign_id, campaign_data):
 
 def poll_for_campaigns():
     print("[Status] Listening for new and scheduled campaigns...")
+    
+    # Recover any campaigns that were stuck in 'Processing' when the server slept/crashed
+    try:
+        ref = db.reference('campaigns')
+        campaigns = ref.get()
+        if campaigns:
+            for campaign_id, campaign_data in campaigns.items():
+                if campaign_data.get('status') == 'Processing':
+                    print(f"[Recovery] Found stuck campaign {campaign_id}, resetting to Running...")
+                    db.reference(f'campaigns/{campaign_id}').update({"status": "Running"})
+    except Exception as e:
+        print(f"[Warning] Failed to recover stuck campaigns: {e}")
+
     while True:
         try:
             ref = db.reference('campaigns')
