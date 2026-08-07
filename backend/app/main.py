@@ -36,6 +36,6 @@ def startup_event():
     worker_thread = threading.Thread(target=poll_for_campaigns, daemon=True)
     worker_thread.start()
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 def root():
     return {"message": "Welcome to Codentra AI Lead Generator API"}
